@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hsm",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-02",
+  "observability": {
+    "enabled": true
+  },
+  "placement": { "mode": "smart" },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "c59206d6add6438491ad9b8ef7ef0aab",
+      "preview_id": "c59206d6add6438491ad9b8ef7ef0aab"
+    }
+  ],
+  "vars": {}
+}
