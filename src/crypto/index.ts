@@ -1,4 +1,4 @@
-export { generateStorageKey } from './hmac';
+export { decryptAesGcm, encryptAesGcm, exportKey, generateDEK, generateIV, importAesKey } from './aes-gcm';
+export { envelopeDecrypt, envelopeEncrypt } from './envelope';
 export { deriveKEK, generateSalt } from './hkdf';
-export { generateDEK, generateIV, encryptAesGcm, decryptAesGcm, exportKey, importAesKey } from './aes-gcm';
-export { envelopeEncrypt, envelopeDecrypt } from './envelope';
+export { generateStorageKey } from './hmac';

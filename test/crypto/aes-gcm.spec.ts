@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
+  decryptAesGcm,
+  encryptAesGcm,
+  exportKey,
   generateDEK,
   generateIV,
-  encryptAesGcm,
-  decryptAesGcm,
-  exportKey,
   importAesKey,
 } from '../../src/crypto/aes-gcm';
 
@@ -76,9 +76,7 @@ describe('AES-GCM-256', () => {
 
       const ciphertext = await encryptAesGcm(dek, plaintext, iv, 'correct-aad');
 
-      await expect(
-        decryptAesGcm(dek, ciphertext, iv, 'wrong-aad')
-      ).rejects.toThrow();
+      await expect(decryptAesGcm(dek, ciphertext, iv, 'wrong-aad')).rejects.toThrow();
     });
 
     it('密钥不匹配时解密失败', async () => {
@@ -89,9 +87,7 @@ describe('AES-GCM-256', () => {
 
       const ciphertext = await encryptAesGcm(dek1, plaintext, iv);
 
-      await expect(
-        decryptAesGcm(dek2, ciphertext, iv)
-      ).rejects.toThrow();
+      await expect(decryptAesGcm(dek2, ciphertext, iv)).rejects.toThrow();
     });
 
     it('IV 不匹配时解密失败', async () => {
@@ -102,9 +98,7 @@ describe('AES-GCM-256', () => {
 
       const ciphertext = await encryptAesGcm(dek, plaintext, iv1);
 
-      await expect(
-        decryptAesGcm(dek, ciphertext, iv2)
-      ).rejects.toThrow();
+      await expect(decryptAesGcm(dek, ciphertext, iv2)).rejects.toThrow();
     });
   });
 

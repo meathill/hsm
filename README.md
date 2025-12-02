@@ -1,5 +1,7 @@
 # Mizu HSM
 
+[![CI](https://github.com/mizu/hsm/actions/workflows/ci.yml/badge.svg)](https://github.com/mizu/hsm/actions/workflows/ci.yml)
+
 软件定义的密钥管理系统 (Hardware Security Module)，基于 Cloudflare Worker + KV 实现。
 
 ## 功能特性
@@ -16,44 +18,12 @@
 
 ## API 接口
 
-### 服务注册
-
-```http
-POST /services
-Content-Type: application/json
-
-{
-  "name": "my-service"
-}
-```
-
-响应：
-```json
-{
-  "success": true,
-  "data": {
-    "serviceId": "uuid",
-    "partA": "base64-encoded-secret",
-    "partB": "base64-encoded-secret"
-  }
-}
-```
-
-- `partA`：配置到 Cloudflare Worker 环境变量 `CF_SECRET_PART`
-- `partB`：由调用方保管，每次请求时通过 `X-HSM-Secret` 头传递
-
-### 获取服务信息
-
-```http
-GET /services/:serviceId
-```
-
 ### 存储密钥
 
 ```http
 PUT /keys/:path
 Content-Type: application/json
-X-HSM-Secret: <partB>
+X-HSM-Secret: <调用方密钥>
 
 {
   "value": "my-secret-key-value"
@@ -64,14 +34,14 @@ X-HSM-Secret: <partB>
 
 ```http
 GET /keys/:path
-X-HSM-Secret: <partB>
+X-HSM-Secret: <调用方密钥>
 ```
 
 ### 删除密钥
 
 ```http
 DELETE /keys/:path
-X-HSM-Secret: <partB>
+X-HSM-Secret: <调用方密钥>
 ```
 
 ## 安全设计
@@ -79,9 +49,14 @@ X-HSM-Secret: <partB>
 ### 密钥分片
 
 KEK（Key Encryption Key）通过 HKDF 从以下部分派生：
-- `partA`：存储在 Cloudflare Worker 环境变量
-- `partB`：由调用方通过 `X-HSM-Secret` 请求头传递
-- `salt`：每次加密随机生成
+- **Part A**：HSM 服务的密钥，存储在 Cloudflare Worker 环境变量 `CF_SECRET_PART`
+- **Part B**：调用方的密钥，通过 `X-HSM-Secret` 请求头传递
+- **Salt**：每次加密随机生成
+
+**安全保证**：
+- HSM 服务不知道调用方的密钥 → 无法单独解密
+- 调用方不知道 HSM 服务的密钥 → 拿到 KV 数据也无法解密
+- 只有通过 HSM 服务，且提供正确的 `X-HSM-Secret`，才能解密
 
 ### 信封加密
 
@@ -99,7 +74,13 @@ KEK（Key Encryption Key）通过 HKDF 从以下部分派生：
 | 变量名 | 说明 |
 |--------|------|
 | `INDEX_SECRET` | HMAC 索引混淆密钥 |
-| `CF_SECRET_PART` | 密钥分片 Part A |
+| `CF_SECRET_PART` | HSM 服务密钥（Part A） |
+
+## 请求头
+
+| 请求头 | 说明 |
+|--------|------|
+| `X-HSM-Secret` | 调用方密钥（Part B） |
 
 ## 开发
 

@@ -4,31 +4,14 @@
  * 提供安全的密钥存储和检索服务
  */
 
-import type { HsmEnv, ApiResponse } from './types';
-import {
-  handleServiceRegister,
-  handleServiceGet,
-  handleKeyStore,
-  handleKeyGet,
-  handleKeyDelete,
-} from './handlers';
+import { handleKeyDelete, handleKeyGet, handleKeyStore } from './handlers';
+import type { ApiResponse, HsmEnv } from './types';
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
     const url = new URL(request.url);
     const method = request.method;
     const path = url.pathname;
-
-    // 服务注册 API
-    if (path === '/services' && method === 'POST') {
-      return handleServiceRegister(request, env as HsmEnv);
-    }
-
-    // 获取服务信息
-    const serviceMatch = path.match(/^\/services\/([^/]+)$/);
-    if (serviceMatch && method === 'GET') {
-      return handleServiceGet(serviceMatch[1], env as HsmEnv);
-    }
 
     // 密钥操作 API
     const keysMatch = path.match(/^\/keys\/(.+)$/);

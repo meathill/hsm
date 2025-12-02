@@ -3,18 +3,16 @@
  * 使用 AEAD 确保数据完整性
  */
 
-import { arrayBufferToBase64, base64ToArrayBuffer, stringToArrayBuffer, arrayBufferToString } from '../utils/encoding';
+import { AesGcmParams } from '../types';
+import { arrayBufferToBase64, arrayBufferToString, base64ToArrayBuffer, stringToArrayBuffer } from '../utils/encoding';
 
 /**
  * 生成随机 DEK
  * @returns AES-GCM-256 密钥
  */
 export async function generateDEK(): Promise<CryptoKey> {
-  return crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt']
-  );
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  return key as CryptoKey;
 }
 
 /**
@@ -35,12 +33,7 @@ export function generateIV(): ArrayBuffer {
  * @param aad 附加认证数据
  * @returns Base64 编码的密文
  */
-export async function encryptAesGcm(
-  key: CryptoKey,
-  plaintext: string,
-  iv: ArrayBuffer,
-  aad?: string
-): Promise<string> {
+export async function encryptAesGcm(key: CryptoKey, plaintext: string, iv: ArrayBuffer, aad?: string): Promise<string> {
   const plaintextBuffer = stringToArrayBuffer(plaintext);
 
   const algorithm: AesGcmParams = {
@@ -67,7 +60,7 @@ export async function decryptAesGcm(
   key: CryptoKey,
   ciphertextBase64: string,
   iv: ArrayBuffer,
-  aad?: string
+  aad?: string,
 ): Promise<string> {
   const ciphertext = base64ToArrayBuffer(ciphertextBase64);
 
@@ -90,7 +83,7 @@ export async function decryptAesGcm(
  */
 export async function exportKey(key: CryptoKey): Promise<string> {
   const rawKey = await crypto.subtle.exportKey('raw', key);
-  return arrayBufferToBase64(rawKey);
+  return arrayBufferToBase64(rawKey as ArrayBuffer);
 }
 
 /**
@@ -100,11 +93,5 @@ export async function exportKey(key: CryptoKey): Promise<string> {
  */
 export async function importAesKey(keyBase64: string): Promise<CryptoKey> {
   const keyBuffer = base64ToArrayBuffer(keyBase64);
-  return crypto.subtle.importKey(
-    'raw',
-    keyBuffer,
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt']
-  );
+  return crypto.subtle.importKey('raw', keyBuffer, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
 }

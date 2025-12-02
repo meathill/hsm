@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { deriveKEK, generateSalt } from '../../src/crypto/hkdf';
 
 describe('HKDF 密钥派生', () => {
@@ -45,16 +45,8 @@ describe('HKDF 密钥派生', () => {
       // 使用 kek1 加密，kek2 解密，验证两者等价
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const plaintext = new TextEncoder().encode('test-data');
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        kek1,
-        plaintext
-      );
-      const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
-        kek2,
-        ciphertext
-      );
+      const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kek1, plaintext);
+      const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext);
 
       expect(new Uint8Array(decrypted)).toEqual(plaintext);
     });
@@ -66,16 +58,10 @@ describe('HKDF 密钥派生', () => {
 
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const plaintext = new TextEncoder().encode('test-data');
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        kek1,
-        plaintext
-      );
+      const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kek1, plaintext);
 
       // 用不同的密钥解密应该失败
-      await expect(
-        crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext)
-      ).rejects.toThrow();
+      await expect(crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext)).rejects.toThrow();
     });
 
     it('不同 partB 产生不同密钥（通过加解密验证）', async () => {
@@ -85,15 +71,9 @@ describe('HKDF 密钥派生', () => {
 
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const plaintext = new TextEncoder().encode('test-data');
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        kek1,
-        plaintext
-      );
+      const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kek1, plaintext);
 
-      await expect(
-        crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext)
-      ).rejects.toThrow();
+      await expect(crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext)).rejects.toThrow();
     });
 
     it('不同盐值产生不同密钥（通过加解密验证）', async () => {
@@ -104,15 +84,9 @@ describe('HKDF 密钥派生', () => {
 
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const plaintext = new TextEncoder().encode('test-data');
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        kek1,
-        plaintext
-      );
+      const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kek1, plaintext);
 
-      await expect(
-        crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext)
-      ).rejects.toThrow();
+      await expect(crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek2, ciphertext)).rejects.toThrow();
     });
   });
 });

@@ -13,13 +13,7 @@ import { arrayBufferToBase64, stringToArrayBuffer } from '../utils/encoding';
  */
 export async function generateStorageKey(path: string, secret: string): Promise<string> {
   const keyData = stringToArrayBuffer(secret);
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
+  const key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
 
   const data = stringToArrayBuffer(path);
   const signature = await crypto.subtle.sign('HMAC', key, data);

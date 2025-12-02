@@ -2,8 +2,8 @@
  * 密钥存储和检索处理器
  */
 
-import type { EncryptedPayload, ApiResponse, HsmEnv, StoreKeyRequest } from '../types';
-import { generateStorageKey, deriveKEK, generateSalt, envelopeEncrypt, envelopeDecrypt } from '../crypto';
+import { deriveKEK, envelopeDecrypt, envelopeEncrypt, generateSalt, generateStorageKey } from '../crypto';
+import type { ApiResponse, EncryptedPayload, HsmEnv, StoreKeyRequest } from '../types';
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../utils/encoding';
 
 const KEY_PREFIX = 'key:';
@@ -26,11 +26,7 @@ function getSecretParts(request: Request, env: HsmEnv): { partA: string; partB: 
 /**
  * 存储密钥
  */
-export async function handleKeyStore(
-  request: Request,
-  env: HsmEnv,
-  path: string
-): Promise<Response> {
+export async function handleKeyStore(request: Request, env: HsmEnv, path: string): Promise<Response> {
   try {
     const { partA, partB } = getSecretParts(request, env);
     const body = await request.json<StoreKeyRequest>();
@@ -40,7 +36,7 @@ export async function handleKeyStore(
     }
 
     // 1. 生成存储 Key (HMAC-SHA256 混淆)
-    const storageKey = KEY_PREFIX + await generateStorageKey(path, env.INDEX_SECRET);
+    const storageKey = KEY_PREFIX + (await generateStorageKey(path, env.INDEX_SECRET));
 
     // 2. 生成盐值并派生 KEK
     const salt = generateSalt();
@@ -80,16 +76,12 @@ export async function handleKeyStore(
 /**
  * 获取密钥
  */
-export async function handleKeyGet(
-  request: Request,
-  env: HsmEnv,
-  path: string
-): Promise<Response> {
+export async function handleKeyGet(request: Request, env: HsmEnv, path: string): Promise<Response> {
   try {
     const { partA, partB } = getSecretParts(request, env);
 
     // 1. 生成存储 Key
-    const storageKey = KEY_PREFIX + await generateStorageKey(path, env.INDEX_SECRET);
+    const storageKey = KEY_PREFIX + (await generateStorageKey(path, env.INDEX_SECRET));
 
     // 2. 获取存储的数据
     const data = await env.KV.get(storageKey);
@@ -144,17 +136,13 @@ export async function handleKeyGet(
 /**
  * 删除密钥
  */
-export async function handleKeyDelete(
-  request: Request,
-  env: HsmEnv,
-  path: string
-): Promise<Response> {
+export async function handleKeyDelete(request: Request, env: HsmEnv, path: string): Promise<Response> {
   try {
     // 验证请求头（确保有权限）
     getSecretParts(request, env);
 
     // 1. 生成存储 Key
-    const storageKey = KEY_PREFIX + await generateStorageKey(path, env.INDEX_SECRET);
+    const storageKey = KEY_PREFIX + (await generateStorageKey(path, env.INDEX_SECRET));
 
     // 2. 检查是否存在
     const data = await env.KV.get(storageKey);

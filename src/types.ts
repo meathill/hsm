@@ -13,18 +13,6 @@ export interface EncryptedPayload {
 }
 
 /**
- * 服务注册响应
- */
-export interface ServiceRegistration {
-  /** 服务 ID */
-  serviceId: string;
-  /** 环境变量中的密钥分片 (Part A) */
-  partA: string;
-  /** 请求头中传递的密钥分片 (Part B) */
-  partB: string;
-}
-
-/**
  * 环境变量类型扩展
  */
 export interface HsmEnv {
@@ -51,3 +39,9 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
+
+export type AesGcmParams = {
+  additionalData?: ArrayBuffer;
+  iv: ArrayBuffer;
+  name: 'AES-GCM';
+};

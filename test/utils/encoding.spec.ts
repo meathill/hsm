@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   arrayBufferToBase64,
+  arrayBufferToString,
   base64ToArrayBuffer,
   stringToArrayBuffer,
-  arrayBufferToString,
 } from '../../src/utils/encoding';
 
 describe('encoding utils', () => {

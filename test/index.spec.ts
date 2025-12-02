@@ -1,68 +1,7 @@
-import { env, SELF } from 'cloudflare:test';
-import { describe, it, expect } from 'vitest';
+import { SELF } from 'cloudflare:test';
+import { describe, expect, it } from 'vitest';
 
 describe('HSM API', () => {
-  describe('POST /services - 服务注册', () => {
-    it('成功注册服务', async () => {
-      const response = await SELF.fetch('https://example.com/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'test-service' }),
-      });
-
-      expect(response.status).toBe(201);
-      const json = await response.json();
-      expect(json.success).toBe(true);
-      expect(json.data.serviceId).toBeTruthy();
-      expect(json.data.partA).toBeTruthy();
-      expect(json.data.partB).toBeTruthy();
-    });
-
-    it('不提供名称也能注册', async () => {
-      const response = await SELF.fetch('https://example.com/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      expect(response.status).toBe(201);
-      const json = await response.json();
-      expect(json.success).toBe(true);
-    });
-  });
-
-  describe('GET /services/:id - 获取服务信息', () => {
-    it('获取已注册的服务信息', async () => {
-      // 先注册服务
-      const registerRes = await SELF.fetch('https://example.com/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'my-service' }),
-      });
-      const registerJson = await registerRes.json();
-      const serviceId = registerJson.data.serviceId;
-
-      // 获取服务信息
-      const response = await SELF.fetch(`https://example.com/services/${serviceId}`);
-
-      expect(response.status).toBe(200);
-      const json = await response.json();
-      expect(json.success).toBe(true);
-      expect(json.data.serviceId).toBe(serviceId);
-      expect(json.data.name).toBe('my-service');
-      expect(json.data.partA).toBeTruthy();
-    });
-
-    it('获取不存在的服务返回 404', async () => {
-      const response = await SELF.fetch('https://example.com/services/non-existent-id');
-
-      expect(response.status).toBe(404);
-      const json = await response.json();
-      expect(json.success).toBe(false);
-      expect(json.error).toBe('Service not found');
-    });
-  });
-
   describe('PUT /keys/:path - 存储密钥', () => {
     it('成功存储密钥', async () => {
       const response = await SELF.fetch('https://example.com/keys/user/123/api-key', {

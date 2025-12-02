@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { envelopeEncrypt, envelopeDecrypt } from '../../src/crypto/envelope';
+import { describe, expect, it } from 'vitest';
+import { envelopeDecrypt, envelopeEncrypt } from '../../src/crypto/envelope';
 import { deriveKEK, generateSalt } from '../../src/crypto/hkdf';
 
 describe('信封加密 (Envelope Encryption)', () => {
@@ -78,9 +78,7 @@ describe('信封加密 (Envelope Encryption)', () => {
 
       const payload = await envelopeEncrypt(kek, plaintext, aad);
 
-      await expect(
-        envelopeDecrypt(kek, payload, 'wrong/path')
-      ).rejects.toThrow();
+      await expect(envelopeDecrypt(kek, payload, 'wrong/path')).rejects.toThrow();
     });
 
     it('KEK 不匹配时解密失败', async () => {
@@ -91,9 +89,7 @@ describe('信封加密 (Envelope Encryption)', () => {
 
       const payload = await envelopeEncrypt(kek1, plaintext, aad);
 
-      await expect(
-        envelopeDecrypt(kek2, payload, aad)
-      ).rejects.toThrow();
+      await expect(envelopeDecrypt(kek2, payload, aad)).rejects.toThrow();
     });
 
     it('不支持的版本号时抛出错误', async () => {
@@ -104,9 +100,7 @@ describe('信封加密 (Envelope Encryption)', () => {
       const payload = await envelopeEncrypt(kek, plaintext, aad);
       payload.v = 999; // 不支持的版本
 
-      await expect(
-        envelopeDecrypt(kek, payload, aad)
-      ).rejects.toThrow('Unsupported payload version: 999');
+      await expect(envelopeDecrypt(kek, payload, aad)).rejects.toThrow('Unsupported payload version: 999');
     });
   });
 });

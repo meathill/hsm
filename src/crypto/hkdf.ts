@@ -12,19 +12,9 @@ import { stringToArrayBuffer } from '../utils/encoding';
  * @param salt 盐值
  * @returns 用于 AES-GCM 的 CryptoKey
  */
-export async function deriveKEK(
-  partA: string,
-  partB: string,
-  salt: ArrayBuffer
-): Promise<CryptoKey> {
+export async function deriveKEK(partA: string, partB: string, salt: ArrayBuffer): Promise<CryptoKey> {
   const combined = partA + partB;
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    stringToArrayBuffer(combined),
-    'HKDF',
-    false,
-    ['deriveKey']
-  );
+  const keyMaterial = await crypto.subtle.importKey('raw', stringToArrayBuffer(combined), 'HKDF', false, ['deriveKey']);
 
   return crypto.subtle.deriveKey(
     {
@@ -36,7 +26,7 @@ export async function deriveKEK(
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   );
 }
 

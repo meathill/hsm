@@ -4,8 +4,8 @@
  */
 
 import type { EncryptedPayload } from '../types';
-import { generateDEK, generateIV, encryptAesGcm, decryptAesGcm, exportKey, importAesKey } from './aes-gcm';
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../utils/encoding';
+import { decryptAesGcm, encryptAesGcm, exportKey, generateDEK, generateIV, importAesKey } from './aes-gcm';
 
 const CURRENT_VERSION = 1;
 
@@ -16,11 +16,7 @@ const CURRENT_VERSION = 1;
  * @param aad 附加认证数据（如路径）
  * @returns 加密后的数据结构
  */
-export async function envelopeEncrypt(
-  kek: CryptoKey,
-  plaintext: string,
-  aad: string
-): Promise<EncryptedPayload> {
+export async function envelopeEncrypt(kek: CryptoKey, plaintext: string, aad: string): Promise<EncryptedPayload> {
   // 1. 生成随机 DEK
   const dek = await generateDEK();
 
@@ -50,11 +46,7 @@ export async function envelopeEncrypt(
  * @param aad 附加认证数据（如路径）
  * @returns 明文数据
  */
-export async function envelopeDecrypt(
-  kek: CryptoKey,
-  payload: EncryptedPayload,
-  aad: string
-): Promise<string> {
+export async function envelopeDecrypt(kek: CryptoKey, payload: EncryptedPayload, aad: string): Promise<string> {
   if (payload.v !== CURRENT_VERSION) {
     throw new Error(`Unsupported payload version: ${payload.v}`);
   }
