@@ -32,4 +32,7 @@ jobs:
         run: pnpm lint
 
       - name: Run tests
+        env:
+          INDEX_SECRET: ${{ vars.INDEX_SECRET }}
+          CF_SECRET_PART: ${{ vars.CF_SECRET_PART }}
         run: pnpm test:ci
