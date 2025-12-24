@@ -4,20 +4,20 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-12-02",
   "account_id": "03a48ac55bdf8719b49f8f21be015be4",
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "c59206d6add6438491ad9b8ef7ef0aab",
+      "preview_id": "c59206d6add6438491ad9b8ef7ef0aab"
+    }
+  ],
+  "vars": {
+    "INDEX_SECRET": "mizu",
+    "CF_SECRET_PART": "meathill"
+  },
   "env": {
     "dev": {
-      "name": "hsm",
-      "kv_namespaces": [
-        {
-          "binding": "KV",
-          "id": "c59206d6add6438491ad9b8ef7ef0aab",
-          "preview_id": "c59206d6add6438491ad9b8ef7ef0aab"
-        }
-      ],
-      "vars": {
-        "INDEX_SECRET": "mizu",
-        "CF_SECRET_PART": "meathill"
-      }
+      "name": "hsm"
     },
     "prod": {
       "name": "hsm-prod",
