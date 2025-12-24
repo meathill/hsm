@@ -1,11 +1,10 @@
 {
   "name": "hsm",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "start": "wrangler dev",
     "test": "vitest",
     "test:ci": "vitest --run",
     "cf-typegen": "wrangler types",
