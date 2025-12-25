@@ -17,7 +17,18 @@
   },
   "env": {
     "dev": {
-      "name": "hsm"
+      "name": "hsm",
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "c59206d6add6438491ad9b8ef7ef0aab",
+          "preview_id": "c59206d6add6438491ad9b8ef7ef0aab"
+        }
+      ],
+      "vars": {
+        "INDEX_SECRET": "mizu",
+        "CF_SECRET_PART": "meathill"
+      }
     },
     "prod": {
       "name": "hsm-prod",
