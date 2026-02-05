@@ -3,39 +3,15 @@
   "name": "hsm",
   "main": "src/index.ts",
   "compatibility_date": "2025-12-02",
-  "account_id": "03a48ac55bdf8719b49f8f21be015be4",
+  "account_id": "fdc63eeea83ae8f5234357308b9a638b",
   "kv_namespaces": [
     {
       "binding": "KV",
-      "id": "c59206d6add6438491ad9b8ef7ef0aab",
-      "preview_id": "c59206d6add6438491ad9b8ef7ef0aab"
+      "id": "5a197ae420a8424185f19fc780f12714",
+      "preview_id": "5a197ae420a8424185f19fc780f12714"
     }
   ],
-  "env": {
-    "dev": {
-      "name": "hsm",
-      "kv_namespaces": [
-        {
-          "binding": "KV",
-          "id": "c59206d6add6438491ad9b8ef7ef0aab",
-          "preview_id": "c59206d6add6438491ad9b8ef7ef0aab"
-        }
-      ],
-      "vars": {
-        "INDEX_SECRET": "mizu",
-        "CF_SECRET_PART": "meathill"
-      }
-    },
-    "prod": {
-      "name": "hsm-prod",
-      "kv_namespaces": [
-        {
-          "binding": "KV",
-          "id": "975f87424b3243ddb30e5442efba06fd",
-          "preview_id": "975f87424b3243ddb30e5442efba06fd"
-        }
-      ]
-    }
-  },
-  "placement": { "mode": "smart" }
+  "placement": {
+    "mode": "smart"
+  }
 }

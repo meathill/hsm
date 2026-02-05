@@ -1,6 +1,6 @@
-# Mizu HSM
+# Meathill HSM
 
-[![CI](https://github.com/mizu/hsm/actions/workflows/ci.yml/badge.svg)](https://github.com/mizu/hsm/actions/workflows/ci.yml)
+[![CI](https://github.com/meathill/hsm/actions/workflows/ci.yml/badge.svg)](https://github.com/meathill/hsm/actions/workflows/ci.yml)
 
 软件定义的密钥管理系统 (Hardware Security Module)，基于 Cloudflare Worker + KV 实现。
 
