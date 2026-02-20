@@ -52,6 +52,31 @@ async function build() {
   <meta name="twitter:title" content="${SITE_TITLE}">
   <meta name="twitter:description" content="${SITE_DESCRIPTION}">
 
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Meathill HSM",
+    "description": "${SITE_DESCRIPTION}",
+    "url": "${siteUrl}/",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Cloudflare Workers",
+    "author": {
+      "@type": "Person",
+      "name": "Meathill",
+      "url": "https://github.com/meathill"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "codeRepository": "https://github.com/meathill/hsm",
+    "programmingLanguage": "TypeScript"
+  }
+  </script>
+
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 </head>
 <body class="bg-gray-50 text-slate-900 font-sans antialiased">
