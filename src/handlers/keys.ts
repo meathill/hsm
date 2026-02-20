@@ -34,9 +34,31 @@ export async function handleKeyStore(request: Request, env: HsmEnv, path: string
     if (!body.value) {
       throw new Error('Missing "value" in request body');
     }
+    if (body.value.length > 8192) {
+      throw new Error('Value exceeds maximum length of 8192 characters');
+    }
 
     // 1. 生成存储 Key (HMAC-SHA256 混淆)
     const storageKey = KEY_PREFIX + (await generateStorageKey(path, env.INDEX_SECRET));
+
+    // 验证原所有权 (覆盖保护)
+    const existingData = await env.KV.get(storageKey);
+    if (existingData) {
+      try {
+        const stored = JSON.parse(existingData) as { salt: string } & EncryptedPayload;
+        const oldSalt = base64ToArrayBuffer(stored.salt);
+        const oldKek = await deriveKEK(partA, partB, oldSalt);
+        const oldPayload: EncryptedPayload = {
+          v: stored.v,
+          dekEnc: stored.dekEnc,
+          iv: stored.iv,
+          payloadEnc: stored.payloadEnc,
+        };
+        await envelopeDecrypt(oldKek, oldPayload, path);
+      } catch (e) {
+        throw new Error('Forbidden: Incorrect secret for existing key');
+      }
+    }
 
     // 2. 生成盐值并派生 KEK
     const salt = generateSalt();
@@ -62,12 +84,13 @@ export async function handleKeyStore(request: Request, env: HsmEnv, path: string
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const isForbidden = error instanceof Error && error.message.startsWith('Forbidden');
     const response: ApiResponse = {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
     return new Response(JSON.stringify(response), {
-      status: 400,
+      status: isForbidden ? 403 : 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -139,7 +162,7 @@ export async function handleKeyGet(request: Request, env: HsmEnv, path: string):
 export async function handleKeyDelete(request: Request, env: HsmEnv, path: string): Promise<Response> {
   try {
     // 验证请求头（确保有权限）
-    getSecretParts(request, env);
+    const { partA, partB } = getSecretParts(request, env);
 
     // 1. 生成存储 Key
     const storageKey = KEY_PREFIX + (await generateStorageKey(path, env.INDEX_SECRET));
@@ -157,6 +180,22 @@ export async function handleKeyDelete(request: Request, env: HsmEnv, path: strin
       });
     }
 
+    // 验证所有权 (删除保护)
+    try {
+      const stored = JSON.parse(data) as { salt: string } & EncryptedPayload;
+      const oldSalt = base64ToArrayBuffer(stored.salt);
+      const oldKek = await deriveKEK(partA, partB, oldSalt);
+      const oldPayload: EncryptedPayload = {
+        v: stored.v,
+        dekEnc: stored.dekEnc,
+        iv: stored.iv,
+        payloadEnc: stored.payloadEnc,
+      };
+      await envelopeDecrypt(oldKek, oldPayload, path);
+    } catch (e) {
+      throw new Error('Forbidden: Incorrect secret for existing key');
+    }
+
     // 3. 删除
     await env.KV.delete(storageKey);
 
@@ -170,12 +209,13 @@ export async function handleKeyDelete(request: Request, env: HsmEnv, path: strin
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const isForbidden = error instanceof Error && error.message.startsWith('Forbidden');
     const response: ApiResponse = {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
     return new Response(JSON.stringify(response), {
-      status: 400,
+      status: isForbidden ? 403 : 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }

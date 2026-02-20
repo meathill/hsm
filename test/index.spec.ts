@@ -2,6 +2,24 @@ import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 
 describe('HSM API', () => {
+  describe('OPTIONS /keys/:path - CORS 预检', () => {
+    it('返回正确的 CORS 头', async () => {
+      const response = await SELF.fetch('https://example.com/keys/user/123/api-key', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'https://example.org',
+          'Access-Control-Request-Method': 'PUT',
+          'Access-Control-Request-Headers': 'X-HSM-Secret',
+        },
+      });
+
+      expect(response.status).toBe(204);
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      expect(response.headers.get('Access-Control-Allow-Methods')).toContain('PUT');
+      expect(response.headers.get('Access-Control-Allow-Headers')).toContain('X-HSM-Secret');
+    });
+  });
+
   describe('PUT /keys/:path - 存储密钥', () => {
     it('成功存储密钥', async () => {
       const response = await SELF.fetch('https://example.com/keys/user/123/api-key', {
@@ -12,11 +30,83 @@ describe('HSM API', () => {
         },
         body: JSON.stringify({ value: 'my-secret-api-key' }),
       });
+      expect(response.status).toBe(201);
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      const json = await response.json();
+      expect(json.success).toBe(true);
+      expect(json.data.path).toBe('user/123/api-key');
+    });
+
+    it('value 超过 8192 长度限制返回错误', async () => {
+      const longValue = 'a'.repeat(8193);
+      const response = await SELF.fetch('https://example.com/keys/user/123/long-key', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HSM-Secret': 'test-part-b',
+        },
+        body: JSON.stringify({ value: longValue }),
+      });
+
+      expect(response.status).toBe(400);
+      const json = await response.json();
+      expect(json.success).toBe(false);
+      expect(json.error).toContain('maximum length');
+    });
+
+    it('使用相同的 X-HSM-Secret 可以成功覆盖', async () => {
+      const path = 'user/123/overwrite-key';
+      // 先存储
+      await SELF.fetch(`https://example.com/keys/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HSM-Secret': 'same-secret',
+        },
+        body: JSON.stringify({ value: 'v1' }),
+      });
+
+      // 覆盖
+      const response = await SELF.fetch(`https://example.com/keys/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HSM-Secret': 'same-secret',
+        },
+        body: JSON.stringify({ value: 'v2' }),
+      });
 
       expect(response.status).toBe(201);
       const json = await response.json();
       expect(json.success).toBe(true);
-      expect(json.data.path).toBe('user/123/api-key');
+    });
+
+    it('使用不同的 X-HSM-Secret 覆盖已存在的密钥返回 403', async () => {
+      const path = 'user/123/overwrite-key2';
+      // 先存储
+      await SELF.fetch(`https://example.com/keys/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HSM-Secret': 'original-secret',
+        },
+        body: JSON.stringify({ value: 'v1' }),
+      });
+
+      // 尝试覆盖
+      const response = await SELF.fetch(`https://example.com/keys/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HSM-Secret': 'wrong-secret',
+        },
+        body: JSON.stringify({ value: 'v2' }),
+      });
+
+      expect(response.status).toBe(403);
+      const json = await response.json();
+      expect(json.success).toBe(false);
+      expect(json.error).toContain('Forbidden');
     });
 
     it('缺少 X-HSM-Secret 头返回错误', async () => {
@@ -141,6 +231,30 @@ describe('HSM API', () => {
         headers: { 'X-HSM-Secret': 'test-part-b' },
       });
       expect(getResponse.status).toBe(404);
+    });
+
+    it('使用不同的 X-HSM-Secret 删除已存在的密钥返回 403', async () => {
+      const path = 'user/123/delete-key';
+      // 先存储
+      await SELF.fetch(`https://example.com/keys/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HSM-Secret': 'original-secret',
+        },
+        body: JSON.stringify({ value: 'to-delete' }),
+      });
+
+      // 尝试非法删除
+      const response = await SELF.fetch(`https://example.com/keys/${path}`, {
+        method: 'DELETE',
+        headers: { 'X-HSM-Secret': 'wrong-secret' },
+      });
+
+      expect(response.status).toBe(403);
+      const json = await response.json();
+      expect(json.success).toBe(false);
+      expect(json.error).toContain('Forbidden');
     });
 
     it('删除不存在的密钥返回 404', async () => {
