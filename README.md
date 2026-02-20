@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/meathill/hsm/actions/workflows/ci.yml/badge.svg)](https://github.com/meathill/hsm/actions/workflows/ci.yml)
 
+[English](./README_EN.md) | 中文
+
 软件定义的密钥管理系统 (Hardware Security Module)，基于 Cloudflare Worker + KV 实现。
 
 ## 功能特性
