@@ -64,6 +64,46 @@ async function getMySecret() {
 }
 ```
 
+**修改/覆盖数据**
+修改数据和“存储数据”调用的是同一个 `PUT` 接口，但安全机制要求你必须提供**之前存入时相同的 `X-HSM-Secret`**，否则覆盖操作会被直接拒绝（403 Forbidden）。
+
+```javascript
+async function updateMySecret() {
+  const response = await fetch('https://<your-hsm-worker-url>/keys/my-app/user-1/token', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HSM-Secret': 'my-super-secret-client-key' // 必须与原先存储时的密钥相同
+    },
+    body: JSON.stringify({ value: 'my-new-updated-data' })
+  });
+
+  if (response.ok) {
+    console.log('数据成功更新！');
+  } else {
+    console.error('更新失败，可能是密钥错误（无权修改）');
+  }
+}
+```
+
+**删除数据**
+同样，删除操作也需要你提交正确的 `X-HSM-Secret`。
+
+```javascript
+async function deleteMySecret() {
+  const response = await fetch('https://<your-hsm-worker-url>/keys/my-app/user-1/token', {
+    method: 'DELETE',
+    headers: {
+      'X-HSM-Secret': 'my-super-secret-client-key' // 必须与原先存储时的密钥相同
+    }
+  });
+
+  if (response.ok) {
+    console.log('数据已安全销毁！');
+  }
+}
+```
+
 由于我们限制了单次存储的值长度不得超过 **8192** 字符，您可以放心地将各种 Token、隐私配置、或是小型的加密通信秘钥直接存入。
 
 ## 运行环境
