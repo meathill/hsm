@@ -6,7 +6,7 @@
   "scripts": {
     "deploy": "pnpm run build && wrangler deploy",
     "dev": "wrangler dev",
-    "build": "node scripts/build.ts",
+    "build": "node scripts/build.mjs",
     "test": "vitest",
     "test:ci": "vitest --run",
     "cf-typegen": "wrangler types",

@@ -2,19 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { marked } from 'marked';
 
-interface LangConfig {
-  lang: string;
-  readmeFile: string;
-  outFile: string;
-  title: string;
-  description: string;
-  keywords: string;
-  switchLabel: string;
-  switchHref: string;
-  footerText: string;
-}
-
-const LANGS: LangConfig[] = [
+const LANGS = [
   {
     lang: 'zh-CN',
     readmeFile: 'README.md',
@@ -41,7 +29,7 @@ const LANGS: LangConfig[] = [
   },
 ];
 
-function getTemplate(cfg: LangConfig, siteUrl: string, htmlContent: string): string {
+function getTemplate(cfg, siteUrl, htmlContent) {
   const canonicalUrl = cfg.lang === 'zh-CN' ? `${siteUrl}/` : `${siteUrl}/en/`;
 
   return `<!DOCTYPE html>
