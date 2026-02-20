@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      hono:
+        specifier: ^4.12.0
+        version: 4.12.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.14
@@ -1114,6 +1118,10 @@ packages:
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
+
+  hono@4.12.0:
+    resolution: {integrity: sha512-NekXntS5M94pUfiVZ8oXXK/kkri+5WpX2/Ik+LVsl+uvw+soj4roXIsPqO+XsWrAw20mOzaXOZf3Q7PfB9A/IA==}
+    engines: {node: '>=16.9.0'}
 
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
@@ -2235,6 +2243,8 @@ snapshots:
   glob-to-regexp@0.4.1: {}
 
   has-flag@4.0.0: {}
+
+  hono@4.12.0: {}
 
   html-escaper@2.0.2: {}
 

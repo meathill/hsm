@@ -4,74 +4,51 @@
  * 提供安全的密钥存储和检索服务
  */
 
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { handleKeyDelete, handleKeyGet, handleKeyStore } from './handlers';
 import type { ApiResponse, HsmEnv } from './types';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-HSM-Secret',
+const app = new Hono<{ Bindings: HsmEnv }>();
+
+// 注入官方 CORS 中间件，自动处理 OPTIONS 及响应头
+app.use(
+  '/keys/*',
+  cors({
+    origin: '*',
+    allowMethods: ['GET', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'X-HSM-Secret'],
+  }),
+);
+
+// 辅助方法，提取具有多级目录结构的路径参数
+const getKeyPath = (url: string) => {
+  return new URL(url).pathname.replace(/^\/keys\//, '');
 };
 
-function withCors(response: Response): Response {
-  const newHeaders = new Headers(response.headers);
-  for (const [key, value] of Object.entries(corsHeaders)) {
-    newHeaders.set(key, value);
-  }
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: newHeaders,
-  });
-}
+// 密钥操作 API 注入
+app.put('/keys/*', async (c) => {
+  const keyPath = getKeyPath(c.req.url);
+  return handleKeyStore(c.req.raw, c.env, keyPath);
+});
 
-export default {
-  async fetch(request, env, ctx): Promise<Response> {
-    const url = new URL(request.url);
-    const method = request.method;
-    const path = url.pathname;
+app.get('/keys/*', async (c) => {
+  const keyPath = getKeyPath(c.req.url);
+  return handleKeyGet(c.req.raw, c.env, keyPath);
+});
 
-    // OPTIONS preflight
-    if (method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
-    }
+app.delete('/keys/*', async (c) => {
+  const keyPath = getKeyPath(c.req.url);
+  return handleKeyDelete(c.req.raw, c.env, keyPath);
+});
 
-    // 密钥操作 API
-    const keysMatch = path.match(/^\/keys\/(.+)$/);
-    if (keysMatch) {
-      const keyPath = keysMatch[1];
-      let response: Response | undefined;
+// 404 处理 (保持原有数据结构兼容遗留测试)
+app.notFound((c) => {
+  const notFoundResponse: ApiResponse = {
+    success: false,
+    error: 'Not found',
+  };
+  return c.json(notFoundResponse, 404);
+});
 
-      switch (method) {
-        case 'PUT':
-          response = await handleKeyStore(request, env as HsmEnv, keyPath);
-          break;
-        case 'GET':
-          response = await handleKeyGet(request, env as HsmEnv, keyPath);
-          break;
-        case 'DELETE':
-          response = await handleKeyDelete(request, env as HsmEnv, keyPath);
-          break;
-      }
-
-      if (response) {
-        return withCors(response);
-      }
-    }
-
-    // 404 Not Found
-    const notFoundResponse: ApiResponse = {
-      success: false,
-      error: 'Not found',
-    };
-    return withCors(
-      new Response(JSON.stringify(notFoundResponse), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-  },
-} satisfies ExportedHandler<Env>;
+export default app;

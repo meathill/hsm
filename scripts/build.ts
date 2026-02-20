@@ -4,10 +4,14 @@ import { marked } from 'marked';
 
 async function build() {
   const rootDir = process.cwd();
+  const publicDir = path.join(rootDir, 'public');
   const readmePath = path.join(rootDir, 'README.md');
-  const outPath = path.join(rootDir, 'index.html');
+  const outPath = path.join(publicDir, 'index.html');
 
   try {
+    // Ensure public directory exists
+    await fs.mkdir(publicDir, { recursive: true });
+
     const readmeContent = await fs.readFile(readmePath, 'utf-8');
 
     // Replace domain placeholder with environment variable if present

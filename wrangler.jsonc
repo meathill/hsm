@@ -11,6 +11,9 @@
       "preview_id": "5a197ae420a8424185f19fc780f12714"
     }
   ],
+  "assets": {
+    "directory": "./public"
+  },
   "placement": {
     "mode": "smart"
   }
