@@ -10,7 +10,61 @@
 - 信封加密 (Envelope Encryption)
 - 密钥分片设计，增强安全性
 - HMAC-SHA256 存储索引混淆
-- AES-GCM-256 AEAD 加密
+- AES-GCM-256 AEAD 加密防篡改
+- **零信任设计 (Zero-Trust)**：服务端无法解密用户数据
+- **无感跨域直连**：原生支持 CORS，前端直传直取，彻底摆脱后端中转
+
+## 为什么你的数据在这里绝对安全？
+
+传统的存储方案常常需要你信任服务提供商不偷看你的数据。但 Meathill HSM 采用 **“零信任” (Zero-Trust)** 的密码学设计，从数学上保证了即使服务端被攻破，或者服务提供商存在主观恶意，你的数据也完全无法被解密或篡改：
+
+1. **拿不到完整的钥匙**：你的数据受 KEK 加密，而 KEK 由服务端的 `CF_SECRET_PART` (Part A) 和你自己在客户端持有的 `X-HSM-Secret` (Part B) 共同派生生成。服务端不保存 Part B，因此服务端**永远**凑不齐完整的解密钥匙。
+2. **拿走了数据也没用**：就算有人黑进了 Cloudflare KV 数据库并拖库，里面存的只是一堆完全随机的乱码数据，在没有你的 `X-HSM-Secret` 的情况下，这些加密数据几乎不可能被暴力破解。
+3. **想篡改/覆盖/删除你的数据？做梦**：系统使用 AES-GCM-256 AEAD 进行底层加密，这不仅保证内容的保密，还会验证数据的“完整性”。任何人试图覆盖或者删除你的数据时，系统都会先用请求中附带的密钥进行一次后台解密尝试。如果解密失败（身份/密钥不符），请求直接报错 403 被拦截。
+4. **连你存了什么键名都不知道**：你存的路径（`path`）在数据库里被 HMAC-SHA256 混淆处理了。即便查看数据库，也只能看到一长串哈希值，无法逆向推测出你原本存的是什么路径业务名。
+
+## 如何在前端（Web 环境）直接使用？
+
+为了让全流程更加安全透明，HSM 服务原生放开了所有 **CORS 跨域限制** 并支持 `OPTIONS` 预检请求。这意味着你可以直接在浏览器的前端代码中（如 React, Vue, Vanilla JS）向 HSM 发起请求存取数据，**无需经过你自己的后端服务器中转**，从而杜绝了因为中间商泄露 `X-HSM-Secret` 的可能性。
+
+### 前端直连示例 (Fetch API)
+
+**存储数据**
+```javascript
+async function saveMySecret() {
+  const response = await fetch('https://<your-hsm-worker-url>/keys/my-app/user-1/token', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HSM-Secret': 'my-super-secret-client-key' // 唯有你知道的秘密
+    },
+    body: JSON.stringify({ value: 'the-data-i-want-to-protect' })
+  });
+
+  if (response.ok) {
+    console.log('数据安全入库！');
+  }
+}
+```
+
+**获取数据**
+```javascript
+async function getMySecret() {
+  const response = await fetch('https://<your-hsm-worker-url>/keys/my-app/user-1/token', {
+    method: 'GET',
+    headers: {
+      'X-HSM-Secret': 'my-super-secret-client-key' // 用同一把钥匙解密
+    }
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    console.log('取得解密后的数据：', result.data.value);
+  }
+}
+```
+
+由于我们限制了单次存储的值长度不得超过 **8192** 字符，您可以放心地将各种 Token、隐私配置、或是小型的加密通信秘钥直接存入。
 
 ## 运行环境
 

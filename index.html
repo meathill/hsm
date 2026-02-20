@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meathill HSM Documentation</title>
+
+  <!-- 加载 TailwindCSS 及其 Typography 插件 -->
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+  <!-- 加载 marked.js 用于渲染 Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-gray-50 text-slate-900 font-sans antialiased">
+
+  <!-- 顶部导航条 -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-bold text-indigo-600">Meathill HSM</h1>
+      <a href="https://github.com/meathill/hsm" target="_blank" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+        GitHub Source
+      </a>
+    </div>
+  </header>
+
+  <!-- 内容区 -->
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <article
+      id="readme-content"
+      class="prose prose-slate prose-indigo lg:prose-lg max-w-none bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100"
+    >
+      <div class="flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <span class="ml-3 text-gray-500">Loading documentation...</span>
+      </div>
+    </article>
+  </main>
+
+  <script>
+    // 页面加载完成后抓取并渲染 README.md
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('README.md')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to load README.md: ${response.status} ${response.statusText}`);
+          }
+          return response.text();
+        })
+        .then(markdown => {
+          // 渲染 MD 内容并填充到页面中
+          const contentDiv = document.getElementById('readme-content');
+          contentDiv.innerHTML = marked.parse(markdown);
+        })
+        .catch(error => {
+          document.getElementById('readme-content').innerHTML = `
+            <div class="bg-red-50 text-red-600 p-4 rounded-lg">
+              <strong>Error:</strong> ${error.message}<br/>
+              <em>请确保在本地服务器环境下访问（例如：npx http-server 或 live server），直接打开文件可能遇到跨域问题。</em>
+            </div>
+          `;
+          console.error(error);
+        });
+    });
+  </script>
+
+</body>
+</html>
