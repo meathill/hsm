@@ -1,16 +1,41 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "hsm",
+  "name": "hsm-template",
   "main": "src/index.ts",
   "compatibility_date": "2025-12-02",
-  "account_id": "fdc63eeea83ae8f5234357308b9a638b",
   "kv_namespaces": [
     {
-      "binding": "KV",
-      "id": "5a197ae420a8424185f19fc780f12714",
-      "preview_id": "5a197ae420a8424185f19fc780f12714"
+      "binding": "KV"
     }
   ],
+  "env": {
+    "production": {
+      "name": "hsm",
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "5a197ae420a8424185f19fc780f12714",
+          "preview_id": "5a197ae420a8424185f19fc780f12714"
+        }
+      ]
+    },
+    "staging": {
+      "name": "hsm-staging",
+      "kv_namespaces": [
+        {
+          "binding": "KV"
+        }
+      ]
+    },
+    "dev": {
+      "name": "hsm-dev",
+      "kv_namespaces": [
+        {
+          "binding": "KV"
+        }
+      ]
+    }
+  },
   "assets": {
     "directory": "./public"
   },

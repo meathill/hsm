@@ -6,6 +6,66 @@
 
 软件定义的密钥管理系统 (Hardware Security Module)，基于 Cloudflare Worker + KV 实现。
 
+## 一键部署到 Cloudflare Workers
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/meathill/hsm)
+
+点击按钮后，Cloudflare 会引导你 fork 仓库、创建所需资源并完成部署。
+
+> 维护者说明：仓库已启用双轨配置。`pnpm deploy` 只会部署到固定的 `production` 环境（绑定现有生产 KV），不会使用模板环境。
+
+### 部署后必填配置
+
+- `CF_SECRET_PART`: 服务端密钥分片（Part A）
+- `INDEX_SECRET`: KV 索引混淆用 HMAC 密钥
+- 仓库已提供 `.dev.vars.example`，方便本地和模板化部署时查看需要的变量名。
+
+可以使用下面命令生成随机值（推荐 32 字节以上）：
+
+```bash
+openssl rand -hex 32
+```
+
+如果你需要后续手动更新 secret：
+
+```bash
+wrangler secret put CF_SECRET_PART
+wrangler secret put INDEX_SECRET
+```
+
+### 需要单独的环境（env）吗？
+
+- 只做体验/测试：不需要，默认环境即可。
+- 预发 + 生产：建议拆分（例如 `staging` 和默认生产环境），并为每个环境使用不同的 secret。
+- 生产环境已固定：请使用 `pnpm deploy`（内部等价于 `wrangler deploy --env production`）。
+
+示例（给 `staging` 单独配置 secret 并部署）：
+
+```bash
+wrangler secret put CF_SECRET_PART --env staging
+wrangler secret put INDEX_SECRET --env staging
+wrangler deploy --env staging
+```
+
+## AI 集成入口
+
+为了方便 AI Agent（如 Codex、Claude、Cursor、Copilot）快速理解并调用本项目，仓库提供以下入口文件：
+
+- [`llms.txt`](./llms.txt): 项目摘要、关键命令、API 入口与 AI 文档索引
+- [`SKILL.md`](./SKILL.md): 面向 AI 的托管 HSM 服务使用指南（何时使用、如何接入、为何安全）
+- [`mcp.json`](./mcp.json): Cursor MCP 客户端可直接粘贴配置（`mcpServers` + 本地 `stdio` 桥接）
+
+部署静态站后，这些文件会自动发布到根路径，并额外提供 `/.well-known/mcp.json` 便于自动发现。
+
+### MCP 快速使用（Cursor）
+
+如果你不想自建 HSM，只想快速获得加密存储能力，直接使用下面配置即可接入你的已部署服务：
+
+1. 将 [`mcp.json`](./mcp.json) 的内容复制到 Cursor 项目配置文件 `.cursor/mcp.json`。
+2. 把 `HSM_BASE_URL` 替换成你的 Worker 地址（例如 `https://your-hsm-worker.workers.dev`）。
+3. 把 `HSM_SECRET` 替换成你用于 `X-HSM-Secret` 的密钥。
+4. 重启 Cursor MCP 服务后即可调用 `hsm_put_key` / `hsm_get_key` / `hsm_delete_key`。
+
 ## 功能特性
 
 - 安全存储客户密钥

@@ -1,0 +1,4 @@
+# Required secrets for local dev and one-click deployment templates.
+# Generate values with: openssl rand -hex 32
+CF_SECRET_PART=
+INDEX_SECRET=

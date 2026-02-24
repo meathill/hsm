@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "meathill-hsm-hosted": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/hsm-mcp-stdio.mjs"],
+      "env": {
+        "HSM_BASE_URL": "https://<your-hsm-worker-url>",
+        "HSM_SECRET": "<tenant-or-app-secret>"
+      }
+    }
+  }
+}

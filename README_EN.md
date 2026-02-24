@@ -6,6 +6,66 @@ English | [中文](./README.md)
 
 A software-defined Hardware Security Module (HSM) built on Cloudflare Worker + KV.
 
+## One-Click Deploy to Cloudflare Workers
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/meathill/hsm)
+
+Clicking this button walks users through forking the repo, provisioning required resources, and deploying.
+
+> Maintainer note: this repo now uses a dual-track setup. `pnpm deploy` always deploys to the fixed `production` environment (bound to existing production KV), not the template environment.
+
+### Required Configuration After Deploy
+
+- `CF_SECRET_PART`: server-side secret part (Part A)
+- `INDEX_SECRET`: HMAC secret for KV key-index obfuscation
+- `.dev.vars.example` is included in this repo so users can see required variable names quickly.
+
+Generate strong random values (recommended 32+ bytes):
+
+```bash
+openssl rand -hex 32
+```
+
+If you need to update secrets manually later:
+
+```bash
+wrangler secret put CF_SECRET_PART
+wrangler secret put INDEX_SECRET
+```
+
+### Should I Create a Separate Environment?
+
+- Quick trial/testing: not required, default environment is enough.
+- Staging + production: recommended. Use different secrets per environment.
+- Production is pinned: use `pnpm deploy` (internally `wrangler deploy --env production`).
+
+Example (configure and deploy `staging` separately):
+
+```bash
+wrangler secret put CF_SECRET_PART --env staging
+wrangler secret put INDEX_SECRET --env staging
+wrangler deploy --env staging
+```
+
+## AI Integration Entry Points
+
+To make this project easier for AI agents (Codex, Claude, Cursor, Copilot) to understand and use, the repository includes:
+
+- [`llms.txt`](./llms.txt): Project summary, key commands, API entry points, and AI doc index
+- [`SKILL.md`](./SKILL.md): AI-facing hosted HSM usage guide (when to use, how to integrate, why it is safe)
+- [`mcp.json`](./mcp.json): Cursor MCP client paste-ready config (`mcpServers` + local `stdio` bridge)
+
+After static-site deployment, these files are also published at site root, plus `/.well-known/mcp.json` for discovery.
+
+### MCP Quick Start (Cursor)
+
+If you do not want to build your own HSM and only need secure encrypted storage quickly, use this config and point it to your deployed service:
+
+1. Copy the content of [`mcp.json`](./mcp.json) into your Cursor project config `.cursor/mcp.json`.
+2. Replace `HSM_BASE_URL` with your Worker URL (for example `https://your-hsm-worker.workers.dev`).
+3. Replace `HSM_SECRET` with the same secret you send as `X-HSM-Secret`.
+4. Restart Cursor MCP and call `hsm_put_key` / `hsm_get_key` / `hsm_delete_key`.
+
 ## Features
 
 - Secure storage for client secrets

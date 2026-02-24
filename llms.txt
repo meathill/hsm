@@ -1,0 +1,39 @@
+# Meathill HSM
+
+Software-defined Hardware Security Module (HSM) based on Cloudflare Workers + KV.
+
+## Canonical Docs
+
+- Chinese README: ./README.md
+- English README: ./README_EN.md
+- AI skill guide: ./SKILL.md
+- Cursor MCP config: ./mcp.json
+
+## Runtime & Tooling
+
+- Runtime: Cloudflare Workers + KV
+- Language: TypeScript
+- Package manager: pnpm
+- Build static site: `pnpm build`
+- Test: `pnpm test` or `pnpm test:ci`
+- Deploy: `pnpm deploy`
+
+## Core API
+
+- `PUT /keys/:path` with JSON body: `{ "value": "<secret-string>" }`
+- `GET /keys/:path`
+- `DELETE /keys/:path`
+- Required header: `X-HSM-Secret`
+
+## Security Model (Short)
+
+- KEK is derived from `CF_SECRET_PART` (server) + `X-HSM-Secret` (client) + random salt
+- Data is encrypted with envelope encryption using AES-GCM-256
+- Storage keys are obfuscated with HMAC-SHA256 (`INDEX_SECRET`)
+- Server cannot decrypt data without client secret
+
+## AI Notes
+
+- Keep API behavior consistent with tests in `test/`
+- If docs change, run `pnpm build` to regenerate static pages in `public/`
+- Static deployment additionally exposes `/.well-known/mcp.json`

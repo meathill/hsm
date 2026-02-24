@@ -9,6 +9,17 @@ import { arrayBufferToBase64, base64ToArrayBuffer } from '../utils/encoding';
 const KEY_PREFIX = 'key:';
 const HSM_SECRET_HEADER = 'X-HSM-Secret';
 
+async function consumeRequestBodySilently(request: Request): Promise<void> {
+  if (request.bodyUsed) {
+    return;
+  }
+  try {
+    await request.arrayBuffer();
+  } catch {
+    // Ignore body read failures in best-effort cleanup path.
+  }
+}
+
 /**
  * 从请求中提取密钥分片
  */
@@ -28,7 +39,13 @@ function getSecretParts(request: Request, env: HsmEnv): { partA: string; partB: 
  */
 export async function handleKeyStore(request: Request, env: HsmEnv, path: string): Promise<Response> {
   try {
-    const { partA, partB } = getSecretParts(request, env);
+    const partB = request.headers.get(HSM_SECRET_HEADER);
+    if (!partB) {
+      // Drain body before early return to avoid workerd stream warnings.
+      await consumeRequestBodySilently(request);
+      throw new Error(`Missing ${HSM_SECRET_HEADER} header`);
+    }
+    const partA = env.CF_SECRET_PART;
     const body = await request.json<StoreKeyRequest>();
 
     if (!body.value) {

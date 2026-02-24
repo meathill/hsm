@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "pnpm run build && wrangler deploy --env production",
+    "deploy:staging": "pnpm run build && wrangler deploy --env staging",
+    "deploy:template": "pnpm run build && wrangler deploy",
     "dev": "wrangler dev",
     "build": "node scripts/build.mjs",
     "test": "vitest",
@@ -26,5 +28,18 @@
   },
   "dependencies": {
     "hono": "^4.12.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "KV": {
+        "description": "Stores encrypted payloads and envelope metadata."
+      },
+      "CF_SECRET_PART": {
+        "description": "Server-side secret part (Part A) used in HKDF to derive KEK."
+      },
+      "INDEX_SECRET": {
+        "description": "HMAC secret used to obfuscate key paths before KV storage."
+      }
+    }
   }
 }

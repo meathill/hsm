@@ -13,6 +13,7 @@ const LANGS = [
     keywords: 'HSM, 密钥管理, Cloudflare Worker, 零信任, 信封加密, AES-GCM, CORS, API',
     switchLabel: 'English',
     switchHref: '/en/',
+    aiLabel: 'AI 文档',
     footerText: 'Built with Cloudflare Workers.',
   },
   {
@@ -25,9 +26,45 @@ const LANGS = [
     keywords: 'HSM, Key Management, Cloudflare Worker, Zero-Trust, Envelope Encryption, AES-GCM, CORS, API',
     switchLabel: '中文',
     switchHref: '/',
+    aiLabel: 'AI Docs',
     footerText: 'Built with Cloudflare Workers.',
   },
 ];
+
+const AI_ASSETS = ['llms.txt', 'SKILL.md', 'mcp.json'];
+
+const SITE_LINK_REWRITES = [
+  ['./README.md', '/'],
+  ['README.md', '/'],
+  ['./README_EN.md', '/en/'],
+  ['README_EN.md', '/en/'],
+  ['./llms.txt', '/llms.txt'],
+  ['llms.txt', '/llms.txt'],
+  ['./SKILL.md', '/SKILL.md'],
+  ['SKILL.md', '/SKILL.md'],
+  ['./mcp.json', '/mcp.json'],
+  ['mcp.json', '/mcp.json'],
+];
+
+function rewriteHtmlLinksForSite(htmlContent) {
+  let output = htmlContent;
+  for (const [sourceHref, targetHref] of SITE_LINK_REWRITES) {
+    output = output.replaceAll(`href="${sourceHref}"`, `href="${targetHref}"`);
+  }
+  return output;
+}
+
+async function publishAiAssets(rootDir, publicDir) {
+  for (const file of AI_ASSETS) {
+    await fs.copyFile(path.join(rootDir, file), path.join(publicDir, file));
+    console.log(`✅ Published public/${file}`);
+  }
+
+  const wellKnownDir = path.join(publicDir, '.well-known');
+  await fs.mkdir(wellKnownDir, { recursive: true });
+  await fs.copyFile(path.join(rootDir, 'mcp.json'), path.join(wellKnownDir, 'mcp.json'));
+  console.log('✅ Published public/.well-known/mcp.json');
+}
 
 function getTemplate(cfg, siteUrl, htmlContent) {
   const canonicalUrl = cfg.lang === 'zh-CN' ? `${siteUrl}/` : `${siteUrl}/en/`;
@@ -93,6 +130,7 @@ function getTemplate(cfg, siteUrl, htmlContent) {
       <h1 class="text-xl font-bold text-indigo-600">Meathill HSM</h1>
       <nav class="flex items-center gap-4 text-sm font-medium text-gray-500">
         <a href="${cfg.switchHref}" class="hover:text-gray-900 transition-colors">${cfg.switchLabel}</a>
+        <a href="/llms.txt" class="hover:text-gray-900 transition-colors">${cfg.aiLabel}</a>
         <a href="https://github.com/meathill/hsm" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 transition-colors">GitHub</a>
       </nav>
     </div>
@@ -130,12 +168,15 @@ async function build() {
         content = content.replace(/https:\/\/<your-hsm-worker-url>/g, siteUrl);
       }
 
-      const htmlContent = await marked.parse(content);
+      const rawHtmlContent = await marked.parse(content);
+      const htmlContent = rewriteHtmlLinksForSite(rawHtmlContent);
       const html = getTemplate(cfg, siteUrl, htmlContent);
 
       await fs.writeFile(path.join(publicDir, cfg.outFile), html);
       console.log(`✅ Generated public/${cfg.outFile}`);
     }
+
+    await publishAiAssets(rootDir, publicDir);
 
     // ========== 生成 sitemap.xml ==========
     const now = new Date().toISOString().split('T')[0];
@@ -157,6 +198,30 @@ async function build() {
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/llms.txt</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/SKILL.md</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/mcp.json</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/.well-known/mcp.json</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>`;
 
