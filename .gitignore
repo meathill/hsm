@@ -170,4 +170,5 @@ dist
 node_modules
 .DS_Store
 public/*
+!public/.well-known
 !public/.gitkeep
