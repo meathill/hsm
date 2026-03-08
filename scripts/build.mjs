@@ -1,58 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { marked } from 'marked';
-
-const LANGS = [
-  {
-    lang: 'zh-CN',
-    readmeFile: 'README.md',
-    outFile: 'index.html',
-    title: 'Meathill HSM - 零信任密钥管理系统',
-    description:
-      '基于 Cloudflare Worker 的零信任密钥管理服务。采用信封加密 + 密钥分片设计，支持前端直连，数据安全无忧。',
-    keywords: 'HSM, 密钥管理, Cloudflare Worker, 零信任, 信封加密, AES-GCM, CORS, API',
-    switchLabel: 'English',
-    switchHref: '/en/',
-    aiLabel: 'AI 文档',
-    footerText: 'Built with Cloudflare Workers.',
-  },
-  {
-    lang: 'en',
-    readmeFile: 'README_EN.md',
-    outFile: 'en/index.html',
-    title: 'Meathill HSM - Zero-Trust Key Management',
-    description:
-      'A zero-trust key management service built on Cloudflare Workers. Features envelope encryption, key splitting, and direct frontend access.',
-    keywords: 'HSM, Key Management, Cloudflare Worker, Zero-Trust, Envelope Encryption, AES-GCM, CORS, API',
-    switchLabel: '中文',
-    switchHref: '/',
-    aiLabel: 'AI Docs',
-    footerText: 'Built with Cloudflare Workers.',
-  },
-];
-
-const AI_ASSETS = ['llms.txt', 'SKILL.md', 'mcp.json'];
-
-const SITE_LINK_REWRITES = [
-  ['./README.md', '/'],
-  ['README.md', '/'],
-  ['./README_EN.md', '/en/'],
-  ['README_EN.md', '/en/'],
-  ['./llms.txt', '/llms.txt'],
-  ['llms.txt', '/llms.txt'],
-  ['./SKILL.md', '/SKILL.md'],
-  ['SKILL.md', '/SKILL.md'],
-  ['./mcp.json', '/mcp.json'],
-  ['mcp.json', '/mcp.json'],
-];
-
-function rewriteHtmlLinksForSite(htmlContent) {
-  let output = htmlContent;
-  for (const [sourceHref, targetHref] of SITE_LINK_REWRITES) {
-    output = output.replaceAll(`href="${sourceHref}"`, `href="${targetHref}"`);
-  }
-  return output;
-}
+import { AI_ASSETS, LANGS, renderSiteHtml, rewriteHtmlLinksForSite } from './site-template.mjs';
 
 async function publishAiAssets(rootDir, publicDir) {
   for (const file of AI_ASSETS) {
@@ -67,86 +16,7 @@ async function publishAiAssets(rootDir, publicDir) {
 }
 
 function getTemplate(cfg, siteUrl, htmlContent) {
-  const canonicalUrl = cfg.lang === 'zh-CN' ? `${siteUrl}/` : `${siteUrl}/en/`;
-
-  return `<!DOCTYPE html>
-<html lang="${cfg.lang}">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${cfg.title}</title>
-  <meta name="description" content="${cfg.description}">
-  <meta name="keywords" content="${cfg.keywords}">
-  <meta name="author" content="Meathill">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${canonicalUrl}">
-  <link rel="alternate" hreflang="zh-CN" href="${siteUrl}/">
-  <link rel="alternate" hreflang="en" href="${siteUrl}/en/">
-  <link rel="alternate" hreflang="x-default" href="${siteUrl}/">
-
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="${cfg.title}">
-  <meta property="og:description" content="${cfg.description}">
-  <meta property="og:url" content="${canonicalUrl}">
-  <meta property="og:locale" content="${cfg.lang === 'zh-CN' ? 'zh_CN' : 'en_US'}">
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="${cfg.title}">
-  <meta name="twitter:description" content="${cfg.description}">
-
-  <!-- JSON-LD Structured Data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Meathill HSM",
-    "description": "${cfg.description}",
-    "url": "${siteUrl}/",
-    "applicationCategory": "SecurityApplication",
-    "operatingSystem": "Cloudflare Workers",
-    "inLanguage": ["zh-CN", "en"],
-    "author": {
-      "@type": "Person",
-      "name": "Meathill",
-      "url": "https://github.com/meathill"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "codeRepository": "https://github.com/meathill/hsm",
-    "programmingLanguage": "TypeScript"
-  }
-  </script>
-
-  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-</head>
-<body class="bg-gray-50 text-slate-900 font-sans antialiased">
-  <header class="bg-white border-b border-gray-200">
-    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-bold text-indigo-600">Meathill HSM</h1>
-      <nav class="flex items-center gap-4 text-sm font-medium text-gray-500">
-        <a href="${cfg.switchHref}" class="hover:text-gray-900 transition-colors">${cfg.switchLabel}</a>
-        <a href="/llms.txt" class="hover:text-gray-900 transition-colors">${cfg.aiLabel}</a>
-        <a href="https://github.com/meathill/hsm" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 transition-colors">GitHub</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="max-w-4xl mx-auto px-6 py-12">
-    <article class="prose prose-slate prose-indigo lg:prose-lg max-w-none bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
-      ${htmlContent}
-    </article>
-  </main>
-
-  <footer class="max-w-4xl mx-auto px-6 py-8 text-center text-sm text-gray-400">
-    <p>&copy; ${new Date().getFullYear()} Meathill HSM. ${cfg.footerText}</p>
-  </footer>
-</body>
-</html>`;
+  return renderSiteHtml(cfg, siteUrl, htmlContent);
 }
 
 async function build() {
