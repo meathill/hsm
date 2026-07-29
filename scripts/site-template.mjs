@@ -73,28 +73,43 @@ function getCanonicalUrl(lang, siteUrl) {
 }
 
 function getStructuredData(description, siteUrl) {
+  const author = {
+    '@type': 'Person',
+    name: 'Meathill',
+    url: 'https://meathill.com',
+  };
+
   return JSON.stringify(
     {
       '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Meathill HSM',
-      description,
-      url: `${siteUrl}/`,
-      applicationCategory: 'SecurityApplication',
-      operatingSystem: 'Cloudflare Workers',
-      inLanguage: ['zh-CN', 'en'],
-      author: {
-        '@type': 'Person',
-        name: 'Meathill',
-        url: 'https://meathill.com',
-      },
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'USD',
-      },
-      codeRepository: 'https://github.com/meathill/hsm',
-      programmingLanguage: 'TypeScript',
+      '@graph': [
+        {
+          '@type': 'SoftwareApplication',
+          name: 'Meathill HSM',
+          description,
+          url: `${siteUrl}/`,
+          applicationCategory: 'SecurityApplication',
+          operatingSystem: 'Cloudflare Workers',
+          inLanguage: ['zh-CN', 'en'],
+          author,
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'USD',
+          },
+        },
+        {
+          '@type': 'SoftwareSourceCode',
+          name: 'Meathill HSM',
+          codeRepository: 'https://github.com/meathill/hsm',
+          programmingLanguage: {
+            '@type': 'ComputerLanguage',
+            name: 'TypeScript',
+          },
+          url: 'https://github.com/meathill/hsm',
+          author,
+        },
+      ],
     },
     null,
     2,
