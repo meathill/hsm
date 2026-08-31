@@ -1,3 +1,5 @@
+import { brandCatalog, getBrandNetworkLinks, getOrganizationJsonLd, getPublicBrandSites } from 'meathill-brand';
+
 export const GOOGLE_ANALYTICS_ID = 'G-1S0T1HF97B';
 export const COMMENT_SITE_ID = '8a576462-a61c-492a-ad36-33fc48e281b3';
 export const COMMENT_API_URL = 'https://awesomecomment.org';
@@ -20,6 +22,8 @@ export const LANGS = [
     switchHref: '/en/',
     aiLabel: 'AI 文档',
     siteLabel: 'meathill.com',
+    networkLabel: '产品网络',
+    allProductsLabel: '全部产品',
     footerText: 'Built with Cloudflare Workers.',
     commentLabel: '评论',
     commentLoadingText: '评论加载中...',
@@ -37,6 +41,8 @@ export const LANGS = [
     switchHref: '/',
     aiLabel: 'AI Docs',
     siteLabel: 'meathill.com',
+    networkLabel: 'Product network',
+    allProductsLabel: 'All products',
     footerText: 'Built with Cloudflare Workers.',
     commentLabel: 'Comments',
     commentLoadingText: 'Loading comments...',
@@ -83,6 +89,7 @@ function getStructuredData(description, siteUrl) {
     {
       '@context': 'https://schema.org',
       '@graph': [
+        getOrganizationJsonLd(),
         {
           '@type': 'SoftwareApplication',
           name: 'Meathill HSM',
@@ -92,6 +99,7 @@ function getStructuredData(description, siteUrl) {
           operatingSystem: 'Cloudflare Workers',
           inLanguage: ['zh-CN', 'en'],
           author,
+          publisher: { '@id': brandCatalog.organization.id },
           offers: {
             '@type': 'Offer',
             price: '0',
@@ -116,6 +124,27 @@ function getStructuredData(description, siteUrl) {
   );
 }
 
+function getSiteSwitcher(config) {
+  const links = getPublicBrandSites()
+    .map(
+      (site) =>
+        `<a${site.id === 'hsm' ? ' aria-current="page"' : ''} href="${escapeHtml(site.url)}">${escapeHtml(site.name)}</a>`,
+    )
+    .join('');
+
+  return `<details class="site-switcher">
+    <summary>${escapeHtml(config.networkLabel)}</summary>
+    <div class="site-switcher-panel">${links}<a class="all-products" href="${escapeHtml(brandCatalog.directoryUrl)}">${escapeHtml(config.allProductsLabel)}</a></div>
+  </details>`;
+}
+
+function getFooterLinks(config) {
+  const links = getBrandNetworkLinks('hsm')
+    .map((site) => `<a href="${escapeHtml(site.url)}">${escapeHtml(site.name)}</a>`)
+    .join('');
+  return `${links}<a href="${escapeHtml(brandCatalog.directoryUrl)}">${escapeHtml(config.allProductsLabel)}</a>`;
+}
+
 function getCommentSection(config) {
   const runtimeConfig = {
     apiUrl: COMMENT_API_URL,
@@ -133,9 +162,9 @@ function getCommentSection(config) {
   };
 
   return `
-    <section class="mt-8 bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100" aria-labelledby="comments-title">
-      <h2 id="comments-title" class="text-2xl font-semibold text-slate-900 mb-6">${escapeHtml(config.commentLabel)}</h2>
-      <div id="awesome-comment" class="min-h-[200px] text-sm text-gray-500" data-thread-id="${COMMENT_THREAD_ID}">${escapeHtml(config.commentLoadingText)}</div>
+    <section class="comment-section" aria-labelledby="comments-title">
+      <h2 id="comments-title">${escapeHtml(config.commentLabel)}</h2>
+      <div id="awesome-comment" class="comment-placeholder" data-thread-id="${COMMENT_THREAD_ID}">${escapeHtml(config.commentLoadingText)}</div>
     </section>
     <script type="module">
       const config = ${JSON.stringify(runtimeConfig)};
@@ -181,7 +210,7 @@ function getCommentSection(config) {
             container.replaceChildren();
 
             const message = document.createElement('p');
-            message.className = 'text-sm text-red-600';
+            message.className = 'comment-error';
             message.textContent = config.errorText;
             container.appendChild(message);
           }
@@ -230,6 +259,7 @@ export function renderSiteHtml(config, siteUrl, htmlContent) {
   <link rel="alternate" hreflang="zh-CN" href="${siteUrl}/">
   <link rel="alternate" hreflang="en" href="${siteUrl}/en/">
   <link rel="alternate" hreflang="x-default" href="${siteUrl}/">
+  <link rel="stylesheet" href="/brand.css">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -257,30 +287,39 @@ export function renderSiteHtml(config, siteUrl, htmlContent) {
 ${structuredData}
   </script>
 
-  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 </head>
-<body class="bg-gray-50 text-slate-900 font-sans antialiased">
-  <header class="bg-white border-b border-gray-200">
-    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-bold text-indigo-600">Meathill HSM</h1>
-      <nav class="flex items-center gap-4 text-sm font-medium text-gray-500">
-        <a href="${config.switchHref}" class="hover:text-gray-900 transition-colors">${escapeHtml(config.switchLabel)}</a>
-        <a href="/llms.txt" class="hover:text-gray-900 transition-colors">${escapeHtml(config.aiLabel)}</a>
-        <a href="https://meathill.com" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 transition-colors">${escapeHtml(config.siteLabel)}</a>
-        <a href="https://github.com/meathill/hsm" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 transition-colors">GitHub</a>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="brand-lockup">
+        <a class="studio-name" href="${brandCatalog.organization.url}">Meathill Studio</a>
+        <span aria-hidden="true" class="brand-divider"></span>
+        <a class="product-name" href="${siteUrl}/">Meathill HSM</a>
+      </div>
+      <nav class="site-nav" aria-label="${escapeHtml(config.networkLabel)}">
+        ${getSiteSwitcher(config)}
+        <a class="primary-nav" href="${config.switchHref}">${escapeHtml(config.switchLabel)}</a>
+        <a href="/llms.txt">${escapeHtml(config.aiLabel)}</a>
+        <a href="https://github.com/meathill/hsm" target="_blank" rel="noopener noreferrer">GitHub</a>
       </nav>
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-6 py-12 space-y-8">
-    <article class="prose prose-slate prose-indigo lg:prose-lg max-w-none bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
+  <main class="site-main">
+    <article class="content-card">
       ${htmlContent}
     </article>
 ${commentSection}
   </main>
 
-  <footer class="max-w-4xl mx-auto px-6 py-8 text-center text-sm text-gray-400">
-    <p>&copy; ${new Date().getFullYear()} Meathill HSM. ${escapeHtml(config.footerText)}</p>
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div>
+        <strong>Meathill Studio</strong>
+        <p>&copy; ${new Date().getFullYear()} ${brandCatalog.organization.legalName}. ${escapeHtml(config.footerText)}</p>
+      </div>
+      <nav class="footer-links" aria-label="${escapeHtml(config.networkLabel)}">${getFooterLinks(config)}</nav>
+    </div>
   </footer>
 </body>
 </html>`;

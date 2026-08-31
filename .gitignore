@@ -168,7 +168,9 @@ dist
 
 .idea
 node_modules
+.pnpm-store/
 .DS_Store
 public/*
 !public/.well-known
 !public/.gitkeep
+public/.well-known/mcp.json

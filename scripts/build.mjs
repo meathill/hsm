@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
+import { SITE_STYLES } from './site-styles.mjs';
 import { AI_ASSETS, LANGS, renderSiteHtml, rewriteHtmlLinksForSite } from './site-template.mjs';
 
 async function publishAiAssets(rootDir, publicDir) {
@@ -13,6 +15,13 @@ async function publishAiAssets(rootDir, publicDir) {
   await fs.mkdir(wellKnownDir, { recursive: true });
   await fs.copyFile(path.join(rootDir, 'mcp.json'), path.join(wellKnownDir, 'mcp.json'));
   console.log('✅ Published public/.well-known/mcp.json');
+}
+
+async function publishBrandStyles(publicDir) {
+  const tokensPath = fileURLToPath(import.meta.resolve('meathill-brand/tokens.css'));
+  const tokens = await fs.readFile(tokensPath, 'utf8');
+  await fs.writeFile(path.join(publicDir, 'brand.css'), `${tokens}\n${SITE_STYLES}`, 'utf8');
+  console.log('✅ Published public/brand.css');
 }
 
 function getTemplate(cfg, siteUrl, htmlContent) {
@@ -47,6 +56,7 @@ async function build() {
     }
 
     await publishAiAssets(rootDir, publicDir);
+    await publishBrandStyles(publicDir);
 
     // ========== 生成 sitemap.xml ==========
     const now = new Date().toISOString().split('T')[0];

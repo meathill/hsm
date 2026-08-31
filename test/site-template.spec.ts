@@ -5,14 +5,17 @@ describe('site template', () => {
   const siteUrl = 'https://hsm.example.com';
   const sampleHtml = '<h1>Sample</h1><p>Body</p>';
 
-  it('为中文页面注入 GA、个人站链接与评论区', () => {
+  it('为中文页面注入品牌网络、GA 与评论区', () => {
     const html = renderSiteHtml(LANGS[0], siteUrl, sampleHtml);
 
     expect(html).toContain(`googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`);
     expect(html).toContain(`gtag('config', '${GOOGLE_ANALYTICS_ID}')`);
     expect(html).toContain('href="https://meathill.com"');
-    expect(html).toContain('target="_blank" rel="noopener noreferrer"');
-    expect(html).toContain('>meathill.com<');
+    expect(html).toContain('>Meathill Studio<');
+    expect(html).toContain('href="/brand.css"');
+    expect(html).toContain('>产品网络<');
+    expect(html).toContain('href="https://meathill.com/app"');
+    expect(html).not.toContain('cdn.tailwindcss.com');
     expect(html).toContain('id="comments-title"');
     expect(html).toContain('>评论<');
     expect(html).toContain(`data-thread-id="${COMMENT_THREAD_ID}"`);
@@ -29,6 +32,7 @@ describe('site template', () => {
     expect(html).toContain('"locale":"en"');
     expect(html).toContain('href="https://meathill.com"');
     expect(html).toContain('"url": "https://meathill.com"');
+    expect(html).toContain('>Product network<');
   });
 
   it('输出合法的 JSON-LD：SoftwareApplication 无非法属性，并用 SoftwareSourceCode 承载仓库信息', () => {
@@ -42,6 +46,7 @@ describe('site template', () => {
 
     const softwareApp = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'SoftwareApplication');
     const sourceCode = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'SoftwareSourceCode');
+    const organization = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'Organization');
 
     expect(softwareApp).toBeDefined();
     expect(softwareApp).not.toHaveProperty('codeRepository');
@@ -61,5 +66,11 @@ describe('site template', () => {
       name: 'TypeScript',
     });
     expect(sourceCode.url).toBe('https://github.com/meathill/hsm');
+    expect(organization).toMatchObject({
+      '@id': 'https://meathill.com/#organization',
+      name: 'Meathill Studio',
+      legalName: 'Meathill LLC',
+    });
+    expect(softwareApp.publisher).toEqual({ '@id': 'https://meathill.com/#organization' });
   });
 });
