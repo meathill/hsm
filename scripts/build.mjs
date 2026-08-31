@@ -1,9 +1,15 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { marked } from 'marked';
 import { SITE_STYLES } from './site-styles.mjs';
 import { AI_ASSETS, LANGS, renderSiteHtml, rewriteHtmlLinksForSite } from './site-template.mjs';
+
+export const DEFAULT_SITE_URL = 'https://hsm.meathill.com';
+
+export function resolveSiteUrl(domain) {
+  return domain ? (domain.startsWith('http') ? domain : `https://${domain}`) : DEFAULT_SITE_URL;
+}
 
 async function publishAiAssets(rootDir, publicDir) {
   for (const file of AI_ASSETS) {
@@ -32,7 +38,7 @@ async function build() {
   const rootDir = process.cwd();
   const publicDir = path.join(rootDir, 'public');
   const domain = process.env.DOMAIN;
-  const siteUrl = domain ? (domain.startsWith('http') ? domain : `https://${domain}`) : 'https://hsm.example.com';
+  const siteUrl = resolveSiteUrl(domain);
 
   try {
     await fs.mkdir(publicDir, { recursive: true });
@@ -122,4 +128,6 @@ Sitemap: ${siteUrl}/sitemap.xml`;
   }
 }
 
-build();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  build();
+}

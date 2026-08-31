@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_SITE_URL, resolveSiteUrl } from '../scripts/build.mjs';
 import { COMMENT_THREAD_ID, GOOGLE_ANALYTICS_ID, LANGS, renderSiteHtml } from '../scripts/site-template.mjs';
 
 describe('site template', () => {
-  const siteUrl = 'https://hsm.example.com';
+  const siteUrl = DEFAULT_SITE_URL;
   const sampleHtml = '<h1>Sample</h1><p>Body</p>';
+
+  it('默认使用正式域名，并允许部署环境显式覆盖', () => {
+    expect(resolveSiteUrl(undefined)).toBe('https://hsm.meathill.com');
+    expect(resolveSiteUrl('preview.example.com')).toBe('https://preview.example.com');
+    expect(resolveSiteUrl('http://localhost:8787')).toBe('http://localhost:8787');
+  });
 
   it('为中文页面注入品牌网络、GA 与评论区', () => {
     const html = renderSiteHtml(LANGS[0], siteUrl, sampleHtml);
@@ -15,6 +22,8 @@ describe('site template', () => {
     expect(html).toContain('href="/brand.css"');
     expect(html).toContain('>产品网络<');
     expect(html).toContain('href="https://meathill.com/app"');
+    expect(html).toContain('href="https://hsm.meathill.com/"');
+    expect(html).toContain('<link rel="canonical" href="https://hsm.meathill.com/">');
     expect(html).not.toContain('cdn.tailwindcss.com');
     expect(html).toContain('id="comments-title"');
     expect(html).toContain('>评论<');
