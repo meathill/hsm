@@ -78,12 +78,13 @@ function getCanonicalUrl(lang, siteUrl) {
   return lang === 'zh-CN' ? `${siteUrl}/` : `${siteUrl}/en/`;
 }
 
-function getStructuredData(description, siteUrl) {
+function getStructuredData(config, siteUrl) {
   const author = {
     '@type': 'Person',
     name: 'Meathill',
     url: 'https://meathill.com',
   };
+  const canonicalUrl = getCanonicalUrl(config.lang, siteUrl);
 
   return JSON.stringify(
     {
@@ -91,20 +92,14 @@ function getStructuredData(description, siteUrl) {
       '@graph': [
         getOrganizationJsonLd(),
         {
-          '@type': 'SoftwareApplication',
-          name: 'Meathill HSM',
-          description,
-          url: `${siteUrl}/`,
-          applicationCategory: 'SecurityApplication',
-          operatingSystem: 'Cloudflare Workers',
-          inLanguage: ['zh-CN', 'en'],
+          '@type': 'WebPage',
+          '@id': `${canonicalUrl}#webpage`,
+          name: config.title,
+          description: config.description,
+          url: canonicalUrl,
+          inLanguage: config.lang,
           author,
           publisher: { '@id': brandCatalog.organization.id },
-          offers: {
-            '@type': 'Offer',
-            price: '0',
-            priceCurrency: 'USD',
-          },
         },
         {
           '@type': 'SoftwareSourceCode',
@@ -242,7 +237,7 @@ export function rewriteHtmlLinksForSite(htmlContent) {
 
 export function renderSiteHtml(config, siteUrl, htmlContent) {
   const canonicalUrl = getCanonicalUrl(config.lang, siteUrl);
-  const structuredData = getStructuredData(config.description, siteUrl);
+  const structuredData = getStructuredData(config, siteUrl);
   const commentSection = getCommentSection(config);
 
   return `<!DOCTYPE html>

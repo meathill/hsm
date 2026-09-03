@@ -44,42 +44,48 @@ describe('site template', () => {
     expect(html).toContain('>Product network<');
   });
 
-  it('输出合法的 JSON-LD：SoftwareApplication 无非法属性，并用 SoftwareSourceCode 承载仓库信息', () => {
-    const html = renderSiteHtml(LANGS[0], siteUrl, sampleHtml);
-    const jsonLdMatch = html.match(/<script type="application\/ld\+json">\s*([\s\S]*?)\s*<\/script>/);
+  it('输出合法的 JSON-LD：无 SoftwareApplication（避免无真实评分的富结果报错），用 WebPage + SoftwareSourceCode 描述页面', () => {
+    for (const [index, config] of LANGS.entries()) {
+      const html = renderSiteHtml(config, siteUrl, sampleHtml);
+      const jsonLdMatch = html.match(/<script type="application\/ld\+json">\s*([\s\S]*?)\s*<\/script>/);
 
-    expect(jsonLdMatch).not.toBeNull();
-    const data = JSON.parse(jsonLdMatch?.[1] ?? '');
-    expect(data['@context']).toBe('https://schema.org');
-    expect(Array.isArray(data['@graph'])).toBe(true);
+      expect(jsonLdMatch).not.toBeNull();
+      const data = JSON.parse(jsonLdMatch?.[1] ?? '');
+      expect(data['@context']).toBe('https://schema.org');
+      expect(Array.isArray(data['@graph'])).toBe(true);
 
-    const softwareApp = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'SoftwareApplication');
-    const sourceCode = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'SoftwareSourceCode');
-    const organization = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'Organization');
+      const types = data['@graph'].map((item: { '@type'?: string }) => item['@type']);
+      expect(types).not.toContain('SoftwareApplication');
+      expect(types).not.toContain('WebApplication');
 
-    expect(softwareApp).toBeDefined();
-    expect(softwareApp).not.toHaveProperty('codeRepository');
-    expect(softwareApp).not.toHaveProperty('programmingLanguage');
-    expect(softwareApp).not.toHaveProperty('aggregateRating');
-    expect(softwareApp).not.toHaveProperty('review');
-    expect(softwareApp.offers).toEqual({
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
-    });
+      const webPage = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'WebPage');
+      const sourceCode = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'SoftwareSourceCode');
+      const organization = data['@graph'].find((item: { '@type'?: string }) => item['@type'] === 'Organization');
 
-    expect(sourceCode).toBeDefined();
-    expect(sourceCode.codeRepository).toBe('https://github.com/meathill/hsm');
-    expect(sourceCode.programmingLanguage).toEqual({
-      '@type': 'ComputerLanguage',
-      name: 'TypeScript',
-    });
-    expect(sourceCode.url).toBe('https://github.com/meathill/hsm');
-    expect(organization).toMatchObject({
-      '@id': 'https://meathill.com/#organization',
-      name: 'Meathill Studio',
-      legalName: 'Meathill LLC',
-    });
-    expect(softwareApp.publisher).toEqual({ '@id': 'https://meathill.com/#organization' });
+      const expectedCanonical = index === 0 ? `${siteUrl}/` : `${siteUrl}/en/`;
+      expect(webPage).toBeDefined();
+      expect(webPage.url).toBe(expectedCanonical);
+      expect(webPage['@id']).toBe(`${expectedCanonical}#webpage`);
+      expect(webPage.name).toBe(config.title);
+      expect(webPage.description).toBe(config.description);
+      expect(webPage.inLanguage).toBe(config.lang);
+      expect(webPage.publisher).toEqual({ '@id': 'https://meathill.com/#organization' });
+      expect(webPage).not.toHaveProperty('aggregateRating');
+      expect(webPage).not.toHaveProperty('review');
+      expect(webPage).not.toHaveProperty('offers');
+
+      expect(sourceCode).toBeDefined();
+      expect(sourceCode.codeRepository).toBe('https://github.com/meathill/hsm');
+      expect(sourceCode.programmingLanguage).toEqual({
+        '@type': 'ComputerLanguage',
+        name: 'TypeScript',
+      });
+      expect(sourceCode.url).toBe('https://github.com/meathill/hsm');
+      expect(organization).toMatchObject({
+        '@id': 'https://meathill.com/#organization',
+        name: 'Meathill Studio',
+        legalName: 'Meathill LLC',
+      });
+    }
   });
 });
