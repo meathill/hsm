@@ -6,6 +6,7 @@ Software-defined Hardware Security Module (HSM) based on Cloudflare Workers + KV
 
 - Chinese README: ./README.md
 - English README: ./README_EN.md
+- Dev notes (architecture why): ./DEV_NOTE.md
 - AI skill guide: ./SKILL.md
 - Cursor MCP config: ./mcp.json
 

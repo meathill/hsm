@@ -5,3 +5,12 @@ allowBuilds:
   esbuild: true
   sharp: false
   workerd: true
+
+minimumReleaseAgeExclude:
+  - miniflare@5.20260828.0-alpha
+
+# vitest-pool-workers pins an older miniflare alpha whose workerd predates our
+# compatibility_date; lift it to the closest newer build that supports the
+# configured date (minimal drift from the pool's pinned version).
+overrides:
+  miniflare: 5.20260828.0-alpha

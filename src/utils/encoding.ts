@@ -17,12 +17,12 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return bytes.buffer;
+  return bytes.buffer as ArrayBuffer;
 }
 
 export function stringToArrayBuffer(str: string): ArrayBuffer {
   const encoder = new TextEncoder();
-  return encoder.encode(str).buffer;
+  return encoder.encode(str).buffer as ArrayBuffer;
 }
 
 export function arrayBufferToString(buffer: ArrayBuffer): string {
