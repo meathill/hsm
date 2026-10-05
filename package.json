@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.34.6",
   "scripts": {
     "deploy": "pnpm run build && wrangler deploy --env production",
     "deploy:staging": "pnpm run build && wrangler deploy --env staging",
@@ -28,6 +29,11 @@
   },
   "dependencies": {
     "hono": "^4.13.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "miniflare": "5.20260828.0-alpha"
+    }
   },
   "cloudflare": {
     "bindings": {
