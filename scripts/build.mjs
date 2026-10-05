@@ -3,12 +3,64 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { marked } from 'marked';
 import { SITE_STYLES } from './site-styles.mjs';
-import { AI_ASSETS, LANGS, renderSiteHtml, rewriteHtmlLinksForSite } from './site-template.mjs';
+import { AI_ASSETS, FAVICON_ASSETS, LANGS, renderSiteHtml, rewriteHtmlLinksForSite } from './site-template.mjs';
 
 export const DEFAULT_SITE_URL = 'https://hsm.meathill.com';
 
 export function resolveSiteUrl(domain) {
   return domain ? (domain.startsWith('http') ? domain : `https://${domain}`) : DEFAULT_SITE_URL;
+}
+
+export function buildSitemapXml(siteUrl, lastmod) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>${siteUrl}/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="${siteUrl}/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${siteUrl}/en/"/>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/en/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="${siteUrl}/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${siteUrl}/en/"/>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+</urlset>
+`;
+}
+
+export function buildHeadersFile() {
+  return `# Cloudflare Workers static asset headers (issue #3)
+/
+  Content-Type: text/html; charset=utf-8
+
+/en
+  Content-Type: text/html; charset=utf-8
+
+/en/
+  Content-Type: text/html; charset=utf-8
+
+/*.html
+  Content-Type: text/html; charset=utf-8
+
+/*.txt
+  Content-Type: text/plain; charset=utf-8
+
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+
+/*.xml
+  Content-Type: application/xml; charset=utf-8
+
+/*.json
+  Content-Type: application/json; charset=utf-8
+`;
 }
 
 async function publishAiAssets(rootDir, publicDir) {
@@ -21,6 +73,13 @@ async function publishAiAssets(rootDir, publicDir) {
   await fs.mkdir(wellKnownDir, { recursive: true });
   await fs.copyFile(path.join(rootDir, 'mcp.json'), path.join(wellKnownDir, 'mcp.json'));
   console.log('✅ Published public/.well-known/mcp.json');
+}
+
+async function publishFavicons(rootDir, publicDir) {
+  for (const file of FAVICON_ASSETS) {
+    await fs.copyFile(path.join(rootDir, file), path.join(publicDir, file));
+    console.log(`✅ Published public/${file}`);
+  }
 }
 
 async function publishBrandStyles(publicDir) {
@@ -62,57 +121,18 @@ async function build() {
     }
 
     await publishAiAssets(rootDir, publicDir);
+    await publishFavicons(rootDir, publicDir);
     await publishBrandStyles(publicDir);
 
-    // ========== 生成 sitemap.xml ==========
+    // ========== 生成 sitemap.xml（仅 HTML 页面）==========
     const now = new Date().toISOString().split('T')[0];
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  <url>
-    <loc>${siteUrl}/</loc>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="${siteUrl}/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="${siteUrl}/en/"/>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/en/</loc>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="${siteUrl}/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="${siteUrl}/en/"/>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/llms.txt</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/SKILL.md</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/mcp.json</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${siteUrl}/.well-known/mcp.json</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-</urlset>`;
-
+    const sitemap = buildSitemapXml(siteUrl, now);
     await fs.writeFile(path.join(publicDir, 'sitemap.xml'), sitemap);
     console.log('✅ Generated public/sitemap.xml');
+
+    // ========== 生成 _headers（HTML/文本 charset）==========
+    await fs.writeFile(path.join(publicDir, '_headers'), buildHeadersFile());
+    console.log('✅ Generated public/_headers');
 
     // ========== 生成 robots.txt ==========
     const robots = `User-agent: *

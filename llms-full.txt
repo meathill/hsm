@@ -1,0 +1,88 @@
+# Meathill HSM (full)
+
+Software-defined Hardware Security Module (HSM) based on Cloudflare Workers + KV.
+Site: https://hsm.meathill.com
+Repo: https://github.com/meathill/hsm
+
+## Canonical Docs
+
+- Chinese README: ./README.md → https://hsm.meathill.com/
+- English README: ./README_EN.md → https://hsm.meathill.com/en/
+- Dev notes (architecture why): ./DEV_NOTE.md
+- Short AI index: ./llms.txt → https://hsm.meathill.com/llms.txt
+- AI skill guide: ./SKILL.md → https://hsm.meathill.com/SKILL.md
+- Cursor MCP config: ./mcp.json → https://hsm.meathill.com/mcp.json
+- MCP discovery: /.well-known/mcp.json → https://hsm.meathill.com/.well-known/mcp.json
+
+## Runtime & Tooling
+
+- Runtime: Cloudflare Workers + KV
+- Language: TypeScript
+- Package manager: pnpm
+- Framework: Hono
+- Build static site: `pnpm build`
+- Test: `pnpm test` or `pnpm test:ci`
+- Local dev: `pnpm dev`
+- Deploy production: `pnpm deploy` (wrangler deploy --env production)
+
+## Core API
+
+Base URL: your Worker URL (production: https://hsm.meathill.com)
+
+### PUT /keys/:path
+
+Store or overwrite a secret.
+
+- Header: `X-HSM-Secret: <client-secret>`
+- Header: `Content-Type: application/json`
+- Body: `{ "value": "<secret-string>" }` (max 8192 chars)
+- Success: `{ "success": true, ... }`
+- Ownership: overwriting an existing key requires the same client secret that can decrypt the current envelope (else 403)
+
+### GET /keys/:path
+
+Read and decrypt a previously stored secret.
+
+- Header: `X-HSM-Secret: <client-secret>`
+- Success: `{ "success": true, "data": { "value": "<secret-string>" } }`
+- Missing key → 404; wrong secret → 403
+
+### DELETE /keys/:path
+
+Delete a secret after ownership validation.
+
+- Header: `X-HSM-Secret: <client-secret>`
+- Success: `{ "success": true, ... }`
+- Wrong secret → 403
+
+Path may contain slashes (e.g. `my-app/user-1/token`). The Worker strips `/keys/` from the pathname to recover the logical path.
+
+## Security Model
+
+- KEK derived via HKDF from `CF_SECRET_PART` (server Part A) + `X-HSM-Secret` (client Part B) + random salt
+- Envelope encryption with AES-GCM-256; key path used as AAD
+- KV storage keys obfuscated with HMAC-SHA256(`INDEX_SECRET`, path)
+- Zero-trust: server cannot decrypt without the client secret
+- CORS enabled on `/keys/*` for direct browser access
+
+## Required Worker Secrets
+
+- `CF_SECRET_PART`: server-side secret part (Part A)
+- `INDEX_SECRET`: HMAC secret for KV key-index obfuscation
+
+## MCP Integration (Cursor)
+
+Copy `mcp.json` into `.cursor/mcp.json`, then set:
+
+- `HSM_BASE_URL`: your Worker URL
+- `HSM_SECRET`: value sent as `X-HSM-Secret`
+
+Stdio bridge: `scripts/hsm-mcp-stdio.mjs`
+Tools: `hsm_put_key`, `hsm_get_key`, `hsm_delete_key`
+serverInfo.name: `meathill-hsm`
+
+## AI Notes
+
+- Keep API behavior consistent with tests in `test/`
+- After doc changes, run `pnpm build` to regenerate `public/`
+- Sitemap lists HTML pages only; AI assets are linked from docs, not the sitemap

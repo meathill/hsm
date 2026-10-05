@@ -50,7 +50,8 @@ export const LANGS = [
   },
 ];
 
-export const AI_ASSETS = ['llms.txt', 'SKILL.md', 'mcp.json'];
+export const AI_ASSETS = ['llms.txt', 'llms-full.txt', 'SKILL.md', 'mcp.json'];
+export const FAVICON_ASSETS = ['favicon.svg', 'favicon.png', 'favicon.ico'];
 
 export const SITE_LINK_REWRITES = [
   ['./README.md', '/'],
@@ -59,6 +60,8 @@ export const SITE_LINK_REWRITES = [
   ['README_EN.md', '/en/'],
   ['./llms.txt', '/llms.txt'],
   ['llms.txt', '/llms.txt'],
+  ['./llms-full.txt', '/llms-full.txt'],
+  ['llms-full.txt', '/llms-full.txt'],
   ['./SKILL.md', '/SKILL.md'],
   ['SKILL.md', '/SKILL.md'],
   ['./mcp.json', '/mcp.json'],
@@ -255,6 +258,9 @@ export function renderSiteHtml(config, siteUrl, htmlContent) {
   <link rel="alternate" hreflang="en" href="${siteUrl}/en/">
   <link rel="alternate" hreflang="x-default" href="${siteUrl}/">
   <link rel="stylesheet" href="/brand.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/favicon.png">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">

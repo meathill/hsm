@@ -44,6 +44,14 @@ describe('site template', () => {
     expect(html).toContain('>Product network<');
   });
 
+
+  it('注入 favicon 链接，便于爬虫发现', () => {
+    const html = renderSiteHtml(LANGS[0], siteUrl, sampleHtml);
+    expect(html).toContain('href="/favicon.svg"');
+    expect(html).toContain('href="/favicon.ico"');
+    expect(html).toContain('href="/favicon.png"');
+  });
+
   it('输出合法的 JSON-LD：无 SoftwareApplication（避免无真实评分的富结果报错），用 WebPage + SoftwareSourceCode 描述页面', () => {
     for (const [index, config] of LANGS.entries()) {
       const html = renderSiteHtml(config, siteUrl, sampleHtml);

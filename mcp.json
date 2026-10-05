@@ -1,6 +1,12 @@
 {
+  "name": "meathill-hsm",
+  "serverInfo": {
+    "name": "meathill-hsm",
+    "version": "0.2.0"
+  },
   "mcpServers": {
     "meathill-hsm-hosted": {
+      "name": "meathill-hsm",
       "type": "stdio",
       "command": "node",
       "args": ["${workspaceFolder}/scripts/hsm-mcp-stdio.mjs"],
