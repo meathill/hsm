@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Meathill HSM">
+  <rect width="32" height="32" rx="6" fill="#fdfaf2"/>
+  <g fill="#3a2e23" transform="translate(4 4) scale(1.0)">
+    <ellipse cx="6" cy="9" rx="1.8" ry="2.4"/>
+    <ellipse cx="10.5" cy="6" rx="1.8" ry="2.4"/>
+    <ellipse cx="13.5" cy="6" rx="1.8" ry="2.4"/>
+    <ellipse cx="18" cy="9" rx="1.8" ry="2.4"/>
+    <path d="M12 11c-3 0-5 2.5-5 5 0 1.8 1.5 3 3.2 3 0.8 0 1.2-.4 1.8-.4s1 .4 1.8.4c1.7 0 3.2-1.2 3.2-3 0-2.5-2-5-5-5z"/>
+  </g>
+</svg>
