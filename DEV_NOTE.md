@@ -13,8 +13,8 @@
   生产 KV。模板/体验用默认环境，`staging` 单独配 secret。不要把生产 KV id 换成
   占位符，否则一键部署的新用户与生产共用命名空间。
 - **`compatibility_date` 不要随手升级**：它决定 workerd 的行为快照。测试链
-  （`@cloudflare/vitest-pool-workers` pin 的 miniflare alpha）自带的 workerd
-  必须 >= 该日期，否则测试直接起不来（见下“测试链版本约束”）。
+  （`@cloudflare/vitest-plugin` 自带的 miniflare / workerd）必须 >= 该日期，
+  否则测试直接起不来（见下“测试链版本约束”）。
 
 ## 安全设计（实现侧的 why）
 
@@ -30,19 +30,18 @@
   校验（Worker 侧是强制的，MCP 侧是提前失败省一次往返）。改上限时两处一起改，
   见 `MAX_VALUE_LENGTH` / `MAX_SECRET_LENGTH`。
 
-## 测试链版本约束（2026-09 维护轮确认）
+## 测试链版本约束（2026-10 维护轮确认）
 
-- `@cloudflare/vitest-pool-workers@0.22` **仅官方支持 vitest ^4**，vitest 5 会导致
-  pool worker 起不来。本轮曾升到 vitest 5.0.0 验证失败，已回退到 `vitest@4.1.11`。
+- 已从 `@cloudflare/vitest-pool-workers` 迁到 `@cloudflare/vitest-plugin`（官方
+  重命名 / v1）。API 仍是 `cloudflareTest({...})`；`test/tsconfig.json` 的 types
+  用 `@cloudflare/vitest-plugin/types`。
+- `@cloudflare/vitest-plugin` **仅官方支持 vitest ^4.1**，vitest 5 会导致
+  pool worker 起不来。曾升到 vitest 5.0.0 验证失败，保持 `vitest@4.1.11`。
   下次想升 vitest 大版本前，先看该包的 release note 是否声明支持。
-- 该包不再导出 `./config`（`defineWorkersConfig` 已移除），当前写法是
-  `vitest/config` 的 `defineConfig` + `cloudflareTest({...})` 插件
-  （见 `vitest.config.mts`），插件内部自注册 pool，不要再手写 `poolOptions`。
-- pool 把 `miniflare` 精确 pin 在旧 alpha，其 workerd 会落后于我们的
-  `compatibility_date`。`pnpm-workspace.yaml` 里有 `overrides: miniflare`，
-  取的是“支持该日期的最小 newer alpha”，减少与 pool 的内部 API 漂移。
-  升级任一侧后若出现 `requires compatibility date ... newest date supported`，
-  先对齐这两处。
+- 插件精确 pin 的 `miniflare` / `wrangler` 需覆盖我们的 `compatibility_date`
+  （当前 `2026-08-28`）。不要用 `overrides` 强行抬 miniflare——应升级
+  `@cloudflare/vitest-plugin` / `wrangler` 到自带足够新 workerd 的版本。
+  若出现 `requires compatibility date ... newest date supported`，先升这两处。
 - **v8 coverage 被 pool 显式拒绝**（缺 `node:inspector`）：`--coverage` 必须用
   istanbul provider。CI 默认不跑覆盖率，所以 `@vitest/coverage-v8` 只是占位依赖；
   真要开覆盖率时换 `@vitest/coverage-istanbul`。
