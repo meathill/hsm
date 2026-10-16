@@ -16,7 +16,7 @@ export const LANGS = [
     outFile: 'index.html',
     title: 'Meathill HSM - 零信任密钥管理系统',
     description:
-      '基于 Cloudflare Worker 的零信任密钥管理服务。采用信封加密 + 密钥分片设计，支持前端直连，数据安全无忧。',
+      '基于 Cloudflare Worker + KV 的开源零信任密钥管理服务。采用信封加密与 AES-GCM-256，KEK 由服务端分片与调用方密钥经 HKDF 派生，服务端无法单独解密；原生支持 CORS 前端直连存取，并提供 MCP 接口供 Cursor 等 AI 工具调用。',
     keywords: 'HSM, 密钥管理, Cloudflare Worker, 零信任, 信封加密, AES-GCM, CORS, API',
     switchLabel: 'English',
     switchHref: '/en/',
