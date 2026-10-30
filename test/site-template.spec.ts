@@ -21,6 +21,10 @@ describe('site template', () => {
     expect(html).toContain('>Meathill Studio<');
     expect(html).toContain('href="/brand.css"');
     expect(html).toContain('>产品网络<');
+    expect(html).toContain('popover="auto"');
+    expect(html).not.toContain('muiad.meathill.com');
+    expect(html).not.toContain('waka.meathill.com');
+    expect(html).not.toContain('muirpg.meathill.com');
     expect(html).toContain('href="https://meathill.com/app"');
     expect(html).toContain('href="https://hsm.meathill.com/"');
     expect(html).toContain('<link rel="canonical" href="https://hsm.meathill.com/">');
@@ -43,7 +47,6 @@ describe('site template', () => {
     expect(html).toContain('"url": "https://meathill.com"');
     expect(html).toContain('>Product network<');
   });
-
 
   it('注入 favicon 链接，便于爬虫发现', () => {
     const html = renderSiteHtml(LANGS[0], siteUrl, sampleHtml);

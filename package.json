@@ -22,7 +22,7 @@
     "@types/node": "^26.4.1",
     "@vitest/coverage-v8": "^4.1.11",
     "marked": "^18.0.11",
-    "meathill-brand": "^0.1.0",
+    "meathill-brand": "^0.2.0",
     "typescript": "^7.0.2",
     "vitest": "~4.1.11",
     "wrangler": "^4.147.0"

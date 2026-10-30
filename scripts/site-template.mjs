@@ -123,17 +123,40 @@ function getStructuredData(config, siteUrl) {
 }
 
 function getSiteSwitcher(config) {
+  const currentBadge = config.lang === 'zh-CN' ? '当前站点' : 'Current';
   const links = getPublicBrandSites()
-    .map(
-      (site) =>
-        `<a${site.id === 'hsm' ? ' aria-current="page"' : ''} href="${escapeHtml(site.url)}">${escapeHtml(site.name)}</a>`,
-    )
+    .map((site) => {
+      const isCurrent = site.id === 'hsm';
+      const badge = isCurrent ? `<span class="site-switcher-badge">${currentBadge}</span>` : '';
+      return `<a${isCurrent ? ' aria-current="page"' : ''} href="${escapeHtml(site.url)}"><span>${escapeHtml(site.name)}</span>${badge}</a>`;
+    })
     .join('');
 
-  return `<details class="site-switcher">
-    <summary>${escapeHtml(config.networkLabel)}</summary>
-    <div class="site-switcher-panel">${links}<a class="all-products" href="${escapeHtml(brandCatalog.directoryUrl)}">${escapeHtml(config.allProductsLabel)}</a></div>
-  </details>`;
+  return `<div class="site-switcher">
+    <button id="hsm-site-trigger" class="site-switcher-trigger" type="button" popovertarget="hsm-site-menu" aria-expanded="false" style="anchor-name: --hsm-site-anchor">
+      <span>${escapeHtml(config.networkLabel)}</span>
+      <span class="site-switcher-chevron" aria-hidden="true"></span>
+    </button>
+    <div id="hsm-site-menu" class="site-switcher-panel" popover="auto" style="position-anchor: --hsm-site-anchor">${links}<hr class="site-switcher-separator"><a class="all-products" href="${escapeHtml(brandCatalog.directoryUrl)}"><span>${escapeHtml(config.allProductsLabel)}</span><span aria-hidden="true">→</span></a></div>
+  </div>
+  <script type="module">
+    const trigger = document.getElementById('hsm-site-trigger');
+    const menu = document.getElementById('hsm-site-menu');
+    if (trigger && menu) {
+      menu.addEventListener('toggle', (event) => {
+        const isOpen = event.newState ? event.newState === 'open' : menu.matches(':popover-open, .\\\\:popover-open');
+        trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (isOpen && !(typeof CSS !== 'undefined' && CSS.supports('position-area: block-end'))) {
+          const t = trigger.getBoundingClientRect();
+          const p = menu.getBoundingClientRect();
+          const left = Math.max(8, Math.min(t.right - p.width, window.innerWidth - p.width - 8));
+          const top = t.bottom + 6 + p.height > window.innerHeight - 8 && t.top - 6 - p.height >= 8 ? t.top - 6 - p.height : t.bottom + 6;
+          menu.style.left = left + 'px';
+          menu.style.top = Math.max(8, top) + 'px';
+        }
+      });
+    }
+  </script>`;
 }
 
 function getFooterLinks(config) {
